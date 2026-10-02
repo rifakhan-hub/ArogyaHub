@@ -1,0 +1,367 @@
+/* AarogyaHub design tokens (Frontend Design System v1.0, sections 2-5).
+   Components never use raw colours: only the semantic utilities generated here. */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* dark: utilities follow the resolved theme attribute set by the UI store */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  /* core scales: neem (primary), haldi (attention), neel (info), sindoor (danger), stone (neutral) */
+  --color-neem-50: #eef7f3;
+  --color-neem-100: #d4ece2;
+  --color-neem-200: #a9d8c5;
+  --color-neem-300: #76bda2;
+  --color-neem-400: #43a07f;
+  --color-neem-500: #22866a;
+  --color-neem-600: #147058;
+  --color-neem-700: #0e5a48;
+  --color-neem-800: #0b473a;
+  --color-neem-900: #08342b;
+
+  --color-haldi-50: #fff8e6;
+  --color-haldi-100: #fdebbf;
+  --color-haldi-200: #fad98a;
+  --color-haldi-300: #f5c354;
+  --color-haldi-400: #edae2b;
+  --color-haldi-500: #db9412;
+  --color-haldi-600: #b8760b;
+  --color-haldi-700: #8f5a0c;
+  --color-haldi-800: #6b4410;
+  --color-haldi-900: #4a2f0d;
+
+  --color-neel-50: #eff1fb;
+  --color-neel-100: #d9def5;
+  --color-neel-200: #b3bdeb;
+  --color-neel-300: #8494dc;
+  --color-neel-400: #5a6cc9;
+  --color-neel-500: #3f51b0;
+  --color-neel-600: #324195;
+  --color-neel-700: #293579;
+  --color-neel-800: #202a5e;
+  --color-neel-900: #171e43;
+
+  --color-sindoor-50: #fdf0ef;
+  --color-sindoor-100: #f9d7d4;
+  --color-sindoor-200: #f1aba5;
+  --color-sindoor-300: #e67a71;
+  --color-sindoor-400: #d9544a;
+  --color-sindoor-500: #c3382e;
+  --color-sindoor-600: #a32b23;
+  --color-sindoor-700: #81231d;
+  --color-sindoor-800: #5f1b17;
+  --color-sindoor-900: #401311;
+
+  --color-stone-25: #f7f8f6;
+  --color-stone-50: #eff2ef;
+  --color-stone-100: #e2e7e3;
+  --color-stone-200: #c9d1cb;
+  --color-stone-300: #a7b2aa;
+  --color-stone-400: #7f8c83;
+  --color-stone-500: #5e6b62;
+  --color-stone-600: #47534b;
+  --color-stone-700: #343e38;
+  --color-stone-800: #232b26;
+  --color-stone-900: #17211e;
+
+  --font-sans: "Mukta", "Mukta Mahee", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* type scale: 16px body, ~1.2 ratio, 4px line-height grid */
+  --text-display: 3rem;
+  --text-display--line-height: 3.5rem;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 700;
+  --text-h1: 2.25rem;
+  --text-h1--line-height: 2.75rem;
+  --text-h1--letter-spacing: -0.015em;
+  --text-h1--font-weight: 700;
+  --text-h2: 1.875rem;
+  --text-h2--line-height: 2.375rem;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h2--font-weight: 600;
+  --text-h3: 1.5rem;
+  --text-h3--line-height: 2rem;
+  --text-h3--font-weight: 600;
+  --text-h4: 1.25rem;
+  --text-h4--line-height: 1.75rem;
+  --text-h4--font-weight: 600;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.25rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--letter-spacing: 0.01em;
+
+  /* radius follows hierarchy */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* elevation: level 0 is a border, not a shadow */
+  --shadow-1: 0 1px 2px rgb(23 33 30 / 0.06);
+  --shadow-2: 0 8px 24px rgb(23 33 30 / 0.12);
+  --shadow-3: 0 24px 48px rgb(23 33 30 / 0.18);
+
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-live-pulse: live-pulse 2s var(--ease-standard) infinite;
+  --animate-fade-in: fade-in 200ms var(--ease-standard);
+  --animate-slide-in-right: slide-in-right 320ms var(--ease-emphasis);
+  --animate-slide-in-left: slide-in-left 320ms var(--ease-emphasis);
+  --animate-pop-in: pop-in 200ms var(--ease-standard);
+
+  @keyframes live-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  @keyframes progress {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(300%);
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      scale: 0.97;
+    }
+    to {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+}
+
+/* semantic colours resolve through runtime variables so dark mode swaps one set */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-on-danger: var(--on-danger);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-focus: var(--focus-ring);
+  /* admin navigation: stone-800 so the console reads as an internal tool (design doc 2.3) */
+  --color-nav: var(--nav);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --color-nav-text: var(--nav-text);
+  --color-nav-muted: var(--nav-muted);
+  --color-nav-border: var(--nav-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-grid: var(--chart-grid);
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f7f8f6;
+  --surface: #ffffff;
+  --surface-muted: #eff2ef;
+  --border: #e2e7e3;
+  --border-strong: #c9d1cb;
+  --text: #17211e;
+  --text-muted: #47534b;
+  --text-subtle: #5e6b62;
+  --primary: #147058;
+  --primary-hover: #0e5a48;
+  --primary-soft: #eef7f3;
+  --on-primary: #ffffff;
+  --accent: #edae2b;
+  --accent-hover: #db9412;
+  --accent-soft: #fff8e6;
+  --on-accent: #17211e;
+  --info: #324195;
+  --info-soft: #eff1fb;
+  --danger: #c3382e;
+  --danger-hover: #a32b23;
+  --danger-soft: #fdf0ef;
+  --on-danger: #ffffff;
+  --success: #0e5a48;
+  --success-soft: #eef7f3;
+  --warning: #6b4410;
+  --warning-soft: #fdebbf;
+  --focus-ring: #5a6cc9;
+  --nav: #232b26;
+  --nav-hover: #343e38;
+  --nav-active: #0b473a;
+  --nav-text: #eff2ef;
+  --nav-muted: #a7b2aa;
+  --nav-border: #343e38;
+  /* categorical order neem, neel, haldi: validated (lightness band, chroma, CVD) on both surfaces */
+  --chart-1: #43a07f;
+  --chart-2: #5a6cc9;
+  --chart-3: #b8760b;
+  --chart-grid: #e2e7e3;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1714;
+  --surface: #16211c;
+  --surface-muted: #1e2b25;
+  --border: #2c3a33;
+  --border-strong: #3a4a42;
+  --text: #e6ece8;
+  --text-muted: #a7b2aa;
+  --text-subtle: #8e9a92;
+  --primary: #43a07f;
+  --primary-hover: #76bda2;
+  --primary-soft: #16302a;
+  --on-primary: #17211e;
+  --accent: #f5c354;
+  --accent-hover: #fad98a;
+  --accent-soft: #33290f;
+  --on-accent: #17211e;
+  --info: #8494dc;
+  --info-soft: #1d2340;
+  --danger: #e67a71;
+  --danger-hover: #f1aba5;
+  --danger-soft: #3a1c1a;
+  --on-danger: #17211e;
+  --success: #76bda2;
+  --success-soft: #16302a;
+  --warning: #f5c354;
+  --warning-soft: #33290f;
+  --focus-ring: #8494dc;
+  --nav: #0b1210;
+  --nav-hover: #16211c;
+  --nav-active: #16302a;
+  --nav-text: #e6ece8;
+  --nav-muted: #8e9a92;
+  --nav-border: #1e2b25;
+  --chart-1: #43a07f;
+  --chart-2: #5a6cc9;
+  --chart-3: #b8760b;
+  --chart-grid: #2c3a33;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-bg font-sans text-body text-text antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-neem-100);
+    color: var(--color-neem-900);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  :lang(hi),
+  :lang(pa) {
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Markdown previews (KB articles) use the typography plugin with our tokens */
+@utility prose-ah {
+  --tw-prose-body: var(--text);
+  --tw-prose-headings: var(--text);
+  --tw-prose-lead: var(--text-muted);
+  --tw-prose-links: var(--primary);
+  --tw-prose-bold: var(--text);
+  --tw-prose-counters: var(--text-subtle);
+  --tw-prose-bullets: var(--text-subtle);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--text-muted);
+  --tw-prose-quote-borders: var(--border-strong);
+  --tw-prose-code: var(--text);
+  --tw-prose-th-borders: var(--border-strong);
+  --tw-prose-td-borders: var(--border);
+  font-family: var(--font-sans);
+}
+
+/* booked-slot hatch used by the time-ribbon motif */
+@utility hatch {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 4px,
+    color-mix(in oklab, currentColor 22%, transparent) 4px 5px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
