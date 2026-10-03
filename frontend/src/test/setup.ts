@@ -6,7 +6,7 @@ import { resetDb } from "@/mocks/db";
 import { server } from "./server";
 
 // the first test in a file also downloads the lazy page code, so give it a bit longer
-configure({ asyncUtilTimeout: 5000 });
+configure({ asyncUtilTimeout: 10000 });
 
 // jsdom (the fake browser used by tests) doesn't have these, so add simple versions
 window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;

@@ -9,7 +9,8 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
-  server: { port: 5173 },
+  // host: true listens on IPv4 (127.0.0.1) and IPv6 (::1), so "localhost" works in every browser on Windows
+  server: { port: 5173, host: true },
   build: {
     rollupOptions: {
       output: {

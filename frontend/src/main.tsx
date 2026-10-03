@@ -16,7 +16,10 @@ async function startMockBackend() {
 
 const router = createBrowserRouter(routes);
 
-startMockBackend().then(() => {
+// show the app even if the fake backend can't start (the page still renders; only data calls fail)
+startMockBackend()
+  .catch((err) => console.warn("Fake backend didn't start. Reload the page to try again.", err))
+  .then(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <Providers>

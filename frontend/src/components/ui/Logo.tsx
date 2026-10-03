@@ -12,15 +12,18 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
   );
 }
 
-/** Mark plus "AarogyaHub / Admin console". `onDark` is for the dark sidebar and login panel. */
-export function Logo({ onDark = true }: { onDark?: boolean }) {
+/**
+ * Mark plus "AarogyaHub" and a small line under it ("Admin console" unless `subtitle` says otherwise).
+ * `onDark` is for the dark sidebar and login panel.
+ */
+export function Logo({ onDark = true, subtitle = "Admin console" }: { onDark?: boolean; subtitle?: string }) {
   return (
     <span className="inline-flex items-center gap-2.5">
       <LogoMark />
       <span className="flex flex-col leading-none">
         <span className={cn("text-body-lg font-bold", onDark ? "text-nav-text" : "text-text")}>AarogyaHub</span>
         <span className={cn("mt-0.5 text-caption font-medium", onDark ? "text-nav-muted" : "text-subtle")}>
-          Admin console
+          {subtitle}
         </span>
       </span>
     </span>

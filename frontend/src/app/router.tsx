@@ -1,4 +1,4 @@
-import { Navigate, type RouteObject } from "react-router";
+import type { RouteObject } from "react-router";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/features/admin/AdminLayout";
 import { Forbidden, NotFound, RouteError } from "@/features/errors/ErrorPages";
@@ -18,7 +18,7 @@ export const routes: RouteObject[] = [
     errorElement: <RouteError />,
     hydrateFallbackElement: <Spinner fullScreen />,
     children: [
-      { path: "/", element: <Navigate to="/admin" replace /> },
+      { path: "/", lazy: page(() => import("@/features/public/HomePage")) },
       { path: "/login", lazy: page(() => import("@/features/auth/LoginPage")) },
       {
         path: "/admin",
