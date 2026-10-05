@@ -1,12 +1,3 @@
-"""Admin users routes.
-
-GET   /api/v1/admin/users                  search, filter, sort and page through accounts
-GET   /api/v1/admin/users/{id}             one account
-PATCH /api/v1/admin/users/{id}/block       block or unblock an account
-
-Note: there is no login yet, so these routes are open. Add an admin check when auth is built.
-"""
-
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
@@ -22,7 +13,7 @@ from app.schemas.user import BlockUserRequest, UserDetail, UserOut
 router = APIRouter(prefix="/admin/users", tags=["admin: users"])
 
 SORT_COLUMNS = {
-    "name": func.lower(func.replace(User.name, "Dr. ", "")),  # "Dr. Anjali Mehta" sorts under A
+    "name": func.lower(func.replace(User.name, "Dr. ", "")),
     "created_at": User.created_at,
     "last_login_at": User.last_login_at,
     "role": User.role,
@@ -63,7 +54,6 @@ def list_users(
 
 @router.get("/{user_id}", response_model=UserDetail)
 def get_user(user_id: int, db: Session = Depends(get_db)):
-    # doctor details and appointment stats are filled in once those tables exist
     return UserDetail.model_validate(find_user(db, user_id))
 
 

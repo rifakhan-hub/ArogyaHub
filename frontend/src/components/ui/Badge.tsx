@@ -13,7 +13,6 @@ const tones = {
 
 type Tone = keyof typeof tones;
 
-/** A small rounded label. It always has a dot and text, so it never relies on colour alone (design doc 2.3). */
 export function Badge({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return (
     <span
@@ -27,8 +26,6 @@ export function Badge({ tone, children }: { tone: Tone; children: React.ReactNod
     </span>
   );
 }
-
-/* ---------- labels, shared by badges, filters and tables ---------- */
 
 export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
   pending: "Pending review",
@@ -53,8 +50,6 @@ export const ROLE_LABELS: Record<Role | "visitor", string> = {
 };
 
 export const CATEGORY_LABELS = { faq: "FAQ", howto: "How-to", health: "Health" };
-
-/* ---------- one badge per kind of status ---------- */
 
 const verificationTones: Record<VerificationStatus, Tone> = {
   pending: "warning",

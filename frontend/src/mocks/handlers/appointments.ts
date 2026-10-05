@@ -1,4 +1,3 @@
-// Mock appointments: list, details and admin overrides (cancel, no-show, completed).
 import { http, HttpResponse } from "msw";
 import type { Appointment, AppointmentOverride } from "@/api/types";
 import { db, writeAudit } from "../db";

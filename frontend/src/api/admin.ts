@@ -1,4 +1,3 @@
-// Admin actions that change data. (Pages load data with the useApi hook, see hooks/useApi.ts.)
 import { api } from "./client";
 import type {
   Appointment,
@@ -13,28 +12,20 @@ import type {
   VerifyAction,
 } from "./types";
 
-/* ---------- doctor verification ---------- */
-
 export async function verifyDoctor(id: string, action: VerifyAction, reason?: string) {
   const res = await api.post<Doctor>(`/admin/doctors/${id}/verify`, { action, reason });
   return res.data;
 }
-
-/* ---------- users ---------- */
 
 export async function setUserBlocked(id: string, blocked: boolean, reason?: string) {
   const res = await api.patch<User>(`/admin/users/${id}/block`, { blocked, reason });
   return res.data;
 }
 
-/* ---------- appointments ---------- */
-
 export async function overrideAppointment(id: string, status: AppointmentOverride["status"], reason: string) {
   const res = await api.patch<Appointment>(`/admin/appointments/${id}`, { status, reason });
   return res.data;
 }
-
-/* ---------- knowledge base ---------- */
 
 export async function createArticle(article: KbArticleInput) {
   const res = await api.post<KbArticle>("/admin/kb/articles", article);
@@ -46,7 +37,6 @@ export async function updateArticle(id: string, article: KbArticleInput) {
   return res.data;
 }
 
-/** Publishing splits the article into chunks and adds them to the chatbot's search index. */
 export async function publishArticle(id: string) {
   const res = await api.post<KbArticle>(`/admin/kb/articles/${id}/publish`);
   return res.data;
@@ -61,9 +51,6 @@ export async function deleteArticle(id: string) {
   await api.delete(`/admin/kb/articles/${id}`);
 }
 
-/* ---------- audit log ---------- */
-
-/** One page of the audit log. Used by the CSV export, which reads every page. */
 export async function getAuditLogs(params: AuditListParams) {
   const res = await api.get<Paginated<AuditLog>>("/admin/audit-logs", { params });
   return res.data;

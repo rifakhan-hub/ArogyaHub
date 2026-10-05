@@ -4,15 +4,10 @@ import { AdminLayout } from "@/features/admin/AdminLayout";
 import { Forbidden, NotFound, RouteError } from "@/features/errors/ErrorPages";
 import { RequireRole } from "./RequireRole";
 
-/**
- * Loads a page's code only when someone opens it, so the first download stays small.
- * Every page file ends with `export default function SomethingPage()`.
- */
 const page = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({
   Component: (await load()).default,
 });
 
-/** Every URL in the admin app and the page it shows (design doc 8.1). */
 export const routes: RouteObject[] = [
   {
     errorElement: <RouteError />,
@@ -20,6 +15,7 @@ export const routes: RouteObject[] = [
     children: [
       { path: "/", lazy: page(() => import("@/features/public/HomePage")) },
       { path: "/login", lazy: page(() => import("@/features/auth/LoginPage")) },
+      { path: "/register", lazy: page(() => import("@/features/auth/RegisterPage")) },
       {
         path: "/admin",
         element: (
@@ -27,7 +23,6 @@ export const routes: RouteObject[] = [
             <AdminLayout />
           </RequireRole>
         ),
-        // these pages show inside AdminLayout, below the top bar
         children: [
           { index: true, lazy: page(() => import("@/features/admin/overview/OverviewPage")) },
           { path: "verifications", lazy: page(() => import("@/features/admin/verifications/VerificationsPage")) },

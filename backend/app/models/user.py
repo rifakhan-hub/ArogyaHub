@@ -1,5 +1,3 @@
-"""The users table: one row per account."""
-
 import enum
 from datetime import UTC, datetime
 
@@ -10,7 +8,6 @@ from app.db.base import Base
 
 
 def utcnow() -> datetime:
-    """The current time in UTC, without a timezone attached, because MySQL DATETIME columns don't store one."""
     return datetime.now(UTC).replace(tzinfo=None)
 
 
@@ -28,7 +25,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True)
     phone: Mapped[str | None] = mapped_column(String(20), unique=True)
     city: Mapped[str | None] = mapped_column(String(100))
-    # stores "patient", not "PATIENT"
+    password_hash: Mapped[str | None] = mapped_column(String(255))
     role: Mapped[Role] = mapped_column(Enum(Role, values_callable=lambda e: [m.value for m in e]))
     is_active: Mapped[bool] = mapped_column(default=True)
     is_email_verified: Mapped[bool] = mapped_column(default=False)

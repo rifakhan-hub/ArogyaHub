@@ -3,7 +3,6 @@ import { cloneElement } from "react";
 
 interface FieldProps {
   label: string;
-  /** The id of the input inside. */
   id: string;
   hint?: string;
   error?: string;
@@ -11,10 +10,6 @@ interface FieldProps {
   children: React.ReactElement<Record<string, unknown>>;
 }
 
-/**
- * A form field: label on top, then the input, then a hint or an error message.
- * The input gets its id and aria attributes added, so screen readers read the hint and error too.
- */
 export function Field({ label, id, hint, error, optional, children }: FieldProps) {
   const messageId = `${id}-message`;
   return (

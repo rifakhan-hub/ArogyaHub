@@ -16,7 +16,6 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": "off",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
-      // design system rule: no raw colours in components, only token classes
       "no-restricted-syntax": [
         "error",
         { selector: "Literal[value=/(bg|text|border|fill|stroke)-.#/]", message: "Use a token class instead of a raw colour." },

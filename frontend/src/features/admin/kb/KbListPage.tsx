@@ -16,7 +16,6 @@ import { timeAgo } from "@/lib/dates";
 
 const PAGE_SIZE = 20;
 
-/** The chatbot's knowledge base: the articles it answers from. */
 export default function KbListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");

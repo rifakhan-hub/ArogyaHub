@@ -1,10 +1,3 @@
-"""The AarogyaHub API. Start it from the backend folder:
-
-    .venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
-
-API docs: http://localhost:8000/docs
-"""
-
 import logging
 
 from fastapi import Depends, FastAPI
@@ -17,7 +10,7 @@ from app.core.config import settings
 from app.core.deps import get_db
 from app.core.errors import add_error_handlers
 
-logger = logging.getLogger("uvicorn.error")  # prints in the uvicorn window
+logger = logging.getLogger("uvicorn.error")
 
 app = FastAPI(title="AarogyaHub API")
 
@@ -39,6 +32,5 @@ def health(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
         return {"status": "ok", "db": "ok"}
     except Exception as error:
-        # the reason shows in the server window, not in the response
         logger.error("Database check failed: %s", error)
         return {"status": "ok", "db": "down"}

@@ -15,7 +15,6 @@ import { refreshData, useApi } from "@/hooks/useApi";
 import { formatDate, formatDateTime, timeAgo } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
 
-/** Side panel with one account: details, consultation activity, and block / unblock. */
 export function UserPanel({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { data: user, error, reload } = useApi<UserDetail>(`/admin/users/${userId}`);
 
@@ -36,7 +35,7 @@ export function UserPanel({ userId, onClose }: { userId: string; onClose: () => 
 
 function UserDetails({ user: u }: { user: UserDetail }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const blocking = u.is_active; // an active user can be blocked, a blocked one unblocked
+  const blocking = u.is_active;
 
   async function toggleBlocked(reason: string) {
     try {

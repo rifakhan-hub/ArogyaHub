@@ -6,18 +6,13 @@ import { cn } from "@/lib/cn";
 interface StatCardProps {
   label: string;
   value: number;
-  /** Last period's value; shows the change as "+28%". */
   previous?: number;
   compareLabel?: string;
-  /** Extra line under the number. */
   footnote?: React.ReactNode;
-  /** The page to open when the card is clicked. */
   to: string;
-  /** Yellow background, for things that need attention. */
   highlight?: boolean;
 }
 
-/** A big number with its trend, on the overview page (design doc 3.4). */
 export function StatCard({ label, value, previous, compareLabel, footnote, to, highlight }: StatCardProps) {
   const change = previous === undefined ? null : percentChange(value, previous);
   const TrendIcon = !change ? Minus : change > 0 ? ArrowUpRight : ArrowDownRight;

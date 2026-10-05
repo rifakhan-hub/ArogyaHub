@@ -19,7 +19,6 @@ import { UserPanel } from "./UserPanel";
 
 const PAGE_SIZE = 20;
 
-/** Every account on the platform, with search, filters and block / unblock. */
 export default function UsersPage() {
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");
@@ -36,7 +35,6 @@ export default function UsersPage() {
     page_size: PAGE_SIZE,
   });
 
-  // every filter change goes back to page 1
   function changeFilter(setter: (value: string) => void) {
     return (value: string) => {
       setter(value);

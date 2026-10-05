@@ -1,7 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-// Design doc 6.1: primary for the main action, sindoor (danger) only for destructive ones.
 const variants = {
   primary: "bg-primary text-on-primary shadow-1 hover:bg-primary-hover",
   secondary: "border border-primary bg-surface text-primary hover:bg-primary-soft",
@@ -24,7 +23,6 @@ const sizes = {
 type Variant = keyof typeof variants;
 type Size = keyof typeof sizes;
 
-/** The button classes, for links that should look like buttons: <Link className={buttonClass()} />. */
 export function buttonClass(variant: Variant = "primary", size: Size = "md") {
   return cn(
     "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors duration-[120ms] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
@@ -36,7 +34,6 @@ export function buttonClass(variant: Variant = "primary", size: Size = "md") {
 type ButtonProps = React.ComponentProps<"button"> & {
   variant?: Variant;
   size?: Size;
-  /** Shows a spinner and disables the button while an action runs. */
   loading?: boolean;
 };
 

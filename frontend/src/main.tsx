@@ -1,4 +1,3 @@
-// The app starts here. In development it first starts the fake backend in src/mocks.
 import "@/styles/fonts.css";
 import "@/styles/theme.css";
 import { StrictMode } from "react";
@@ -16,7 +15,6 @@ async function startMockBackend() {
 
 const router = createBrowserRouter(routes);
 
-// show the app even if the fake backend can't start (the page still renders; only data calls fail)
 startMockBackend()
   .catch((err) => console.warn("Fake backend didn't start. Reload the page to try again.", err))
   .then(() => {

@@ -1,9 +1,5 @@
-// All the words and sample data on the home page, in one place so they're easy to change.
-// The doctors are examples for the page design; the real list will come from the backend's doctor search.
-
 export const SPECIALITIES = ["General Physician", "Paediatrics", "Dermatology", "Gynaecology", "ENT", "Psychiatry"];
 
-/** Words a patient might type, and the speciality each one points to. */
 export const SYMPTOM_WORDS: Record<string, string[]> = {
   "General Physician": ["fever", "cold", "cough", "headache", "bp", "sugar", "diabetes", "body pain", "weakness", "general"],
   Paediatrics: ["child", "baby", "kid", "infant", "vaccination", "children"],
@@ -98,7 +94,6 @@ export const STEPS = [
   },
 ];
 
-/** Real product facts (from the architecture document), shown as big numbers. */
 export const FACTS = [
   { value: 100, suffix: "%", label: "of doctors licence-checked with their medical council before they can take bookings" },
   { value: 30, suffix: " min", label: "longest slot a doctor can offer; the shortest is 5 minutes" },

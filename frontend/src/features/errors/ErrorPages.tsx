@@ -32,7 +32,6 @@ export function NotFound() {
   );
 }
 
-/** Shown to signed-in users who are not admins. */
 export function Forbidden() {
   const { signOut } = useAuth();
   const navigate = useNavigate();
@@ -49,7 +48,6 @@ export function Forbidden() {
   );
 }
 
-/** Shown if a page crashes while rendering. */
 export function RouteError() {
   const error = toApiError(useRouteError());
   return (

@@ -1,13 +1,9 @@
-/* AarogyaHub design tokens (Frontend Design System v1.0, sections 2-5).
-   Components never use raw colours: only the semantic utilities generated here. */
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* dark: utilities follow the resolved theme attribute set by the UI store */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  /* core scales: neem (primary), haldi (attention), neel (info), sindoor (danger), stone (neutral) */
   --color-neem-50: #eef7f3;
   --color-neem-100: #d4ece2;
   --color-neem-200: #a9d8c5;
@@ -67,7 +63,6 @@
   --font-sans: "Mukta", "Mukta Mahee", "Noto Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  /* type scale: 16px body, ~1.2 ratio, 4px line-height grid */
   --text-display: 3rem;
   --text-display--line-height: 3.5rem;
   --text-display--letter-spacing: -0.02em;
@@ -96,13 +91,11 @@
   --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 0.01em;
 
-  /* radius follows hierarchy */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 14px;
   --radius-xl: 20px;
 
-  /* elevation: level 0 is a border, not a shadow */
   --shadow-1: 0 1px 2px rgb(23 33 30 / 0.06);
   --shadow-2: 0 8px 24px rgb(23 33 30 / 0.12);
   --shadow-3: 0 24px 48px rgb(23 33 30 / 0.18);
@@ -169,7 +162,6 @@
   }
 }
 
-/* semantic colours resolve through runtime variables so dark mode swaps one set */
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);
@@ -198,7 +190,6 @@
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-focus: var(--focus-ring);
-  /* admin navigation: stone-800 so the console reads as an internal tool (design doc 2.3) */
   --color-nav: var(--nav);
   --color-nav-hover: var(--nav-hover);
   --color-nav-active: var(--nav-active);
@@ -246,7 +237,6 @@
   --nav-text: #eff2ef;
   --nav-muted: #a7b2aa;
   --nav-border: #343e38;
-  /* categorical order neem, neel, haldi: validated (lightness band, chroma, CVD) on both surfaces */
   --chart-1: #43a07f;
   --chart-2: #5a6cc9;
   --chart-3: #b8760b;
@@ -330,7 +320,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Markdown previews (KB articles) use the typography plugin with our tokens */
 @utility prose-ah {
   --tw-prose-body: var(--text);
   --tw-prose-headings: var(--text);
@@ -348,7 +337,6 @@
   font-family: var(--font-sans);
 }
 
-/* booked-slot hatch used by the time-ribbon motif */
 @utility hatch {
   background-image: repeating-linear-gradient(
     135deg,

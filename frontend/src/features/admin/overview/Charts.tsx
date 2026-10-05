@@ -3,8 +3,6 @@ import type { Analytics } from "@/api/types";
 import { formatDay, formatShortDate } from "@/lib/dates";
 import { formatNumber } from "@/lib/format";
 
-// Recharts takes colours as props, so point at the CSS variables in theme.css (dark mode keeps working).
-// The three series colours were checked for colour-blind separation on light and dark backgrounds.
 const chartColors = {
   primary: "var(--chart-1)",
   info: "var(--chart-2)",
@@ -16,7 +14,6 @@ const chartColors = {
 
 type Series = { key: string; label: string; color: string };
 
-/** Legend always present for 2+ series, so identity is never colour alone. */
 export function ChartLegend({ series }: { series: Series[] }) {
   return (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-small text-muted">
@@ -75,7 +72,6 @@ const axisProps = {
   tick: { fill: chartColors.axis, fontSize: 12, fontFamily: "inherit" },
 } as const;
 
-/** Stacked bars: consultations per day by outcome, 30 days. */
 export function ConsultationsChart({ data }: { data: Analytics["consultations_per_day"] }) {
   const series: Series[] = [
     { key: "completed", label: "Completed", color: chartColors.primary },
@@ -106,7 +102,6 @@ export function ConsultationsChart({ data }: { data: Analytics["consultations_pe
                 dataKey={s.key}
                 stackId="outcome"
                 fill={s.color}
-                // 2px surface gap between stacked segments
                 stroke={chartColors.surface}
                 strokeWidth={1}
                 radius={i === series.length - 1 ? [4, 4, 0, 0] : 0}
@@ -145,7 +140,6 @@ export function ConsultationsChart({ data }: { data: Analytics["consultations_pe
   );
 }
 
-/** Grouped bars: new patient and doctor sign-ups per week. */
 export function SignupsChart({ data }: { data: Analytics["new_users_per_week"] }) {
   const series: Series[] = [
     { key: "patient", label: "Patient", color: chartColors.primary },
@@ -191,7 +185,6 @@ export function SignupsChart({ data }: { data: Analytics["new_users_per_week"] }
   );
 }
 
-/** Single-series ranking: HTML bars with direct value labels (no legend needed). */
 export function SpecialityBars({ data }: { data: Analytics["top_specializations"] }) {
   const max = Math.max(1, ...data.map((d) => d.count));
   return (

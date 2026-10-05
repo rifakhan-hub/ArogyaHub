@@ -24,12 +24,10 @@ import { type KbErrors, slugify, validateArticle, wordCount } from "@/lib/valida
 const EMPTY_ARTICLE: KbArticleInput = { title: "", slug: "", category: "faq", audience: ["patient"], body_md: "", reviewer: null };
 const AUDIENCES: Audience[] = ["visitor", "patient", "doctor"];
 
-/** Just the fields the form edits (the saved article also has id, status, author, ...). */
 function formFields(a: KbArticle): KbArticleInput {
   return { title: a.title, slug: a.slug, category: a.category, audience: a.audience, body_md: a.body_md, reviewer: a.reviewer };
 }
 
-/** /admin/kb/new writes a new article; /admin/kb/:articleId edits one. */
 export default function KbEditorPage() {
   const { articleId } = useParams();
   const { data, error, reload } = useApi<KbArticle>(articleId ? `/admin/kb/articles/${articleId}` : null);
@@ -48,7 +46,6 @@ export default function KbEditorPage() {
 
 function ArticleForm({ article: loaded }: { article?: KbArticle }) {
   const navigate = useNavigate();
-  // `article` is the saved version on the server; `values` is what is in the form right now
   const [article, setArticle] = useState(loaded);
   const [values, setValues] = useState<KbArticleInput>(loaded ? formFields(loaded) : EMPTY_ARTICLE);
   const [slugEdited, setSlugEdited] = useState(!!loaded);
@@ -63,7 +60,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
   );
   const published = article?.status === "published";
 
-  // warn before closing the browser tab with unsaved changes
   useEffect(() => {
     if (!unsaved) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
@@ -73,7 +69,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
 
   function change<K extends keyof KbArticleInput>(key: K, value: KbArticleInput[K]) {
     const next = { ...values, [key]: value };
-    // the slug follows the title until someone edits the slug by hand
     if (key === "title" && !slugEdited) next.slug = slugify(value as string);
     setValues(next);
   }
@@ -85,7 +80,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
     else toast.error(e.message);
   }
 
-  /** Saves the form; with `andPublish`, also publishes (adds it to the chatbot's search). */
   async function save(andPublish: boolean) {
     const input = { ...values, reviewer: values.reviewer?.trim() || null };
     const problems = validateArticle(input);
@@ -103,7 +97,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
       setValues(input);
       if (andPublish) toast.success(`Published. The assistant can answer from "${saved.title}" now.`);
       else toast.success(saved.status === "published" ? "Saved. The assistant now uses the new version." : "Saved.");
-      // a new article gets its own address once it exists
       if (!article) navigate(`/admin/kb/${saved.id}`, { replace: true });
     } catch (err) {
       showError(err);
@@ -163,7 +156,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
         }}
         className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]"
       >
-        {/* left: the content */}
         <Card className="flex flex-col gap-5 p-5">
           <Field label="Title" id="kb-title" error={errors.title}>
             <Input
@@ -213,7 +205,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
             ) : (
               <div className="min-h-[420px] rounded-md border border-border bg-bg px-5 py-4">
                 {values.body_md.trim() ? (
-                  // rehype-sanitize removes any HTML or scripts from the Markdown before showing it
                   <article className="prose prose-ah max-w-[65ch]">
                     <Markdown rehypePlugins={[rehypeSanitize]}>{values.body_md}</Markdown>
                   </article>
@@ -235,7 +226,6 @@ function ArticleForm({ article: loaded }: { article?: KbArticle }) {
           </div>
         </Card>
 
-        {/* right: settings and actions */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-24">
           <Card className="flex flex-col gap-5 p-5">
             <div className="flex flex-col gap-1.5">

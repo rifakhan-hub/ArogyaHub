@@ -24,13 +24,11 @@ describe("money and numbers", () => {
 
 describe("dates (stored in UTC, shown in IST)", () => {
   it("converts UTC to India Standard Time", () => {
-    // architecture doc example: 04:30 UTC is 10:00 IST
     expect(formatTime("2026-10-05T04:30:00Z")).toBe("10:00");
     expect(formatDay("2026-10-05T04:30:00Z")).toBe("Mon, 5 Oct");
   });
 
   it("starts a new day at IST midnight, not UTC midnight", () => {
-    // 19:00 UTC on 5 Oct is 00:30 IST on 6 Oct
     expect(todayIST(new Date("2026-10-05T19:00:00Z"))).toBe("2026-10-06");
   });
 

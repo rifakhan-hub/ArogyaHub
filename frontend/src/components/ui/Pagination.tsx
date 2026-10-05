@@ -9,7 +9,6 @@ interface PaginationProps {
   onChange: (page: number) => void;
 }
 
-/** "21-40 of 150" with previous / next buttons. */
 export function Pagination({ page, pageSize, total, onChange }: PaginationProps) {
   if (total === 0) return null;
   const pages = Math.ceil(total / pageSize);

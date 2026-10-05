@@ -1,6 +1,5 @@
 import { FACTS } from "./content";
 
-/** Four numbers about how the product works. */
 export function Stats() {
   return (
     <section aria-label="AarogyaHub in numbers" className="py-16">

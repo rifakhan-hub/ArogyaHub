@@ -5,7 +5,6 @@ import { Button } from "./Button";
 const next: Record<Theme, Theme> = { light: "dark", dark: "system", system: "light" };
 const labels: Record<Theme, string> = { light: "Light", dark: "Dark", system: "Match system" };
 
-/** One button that switches light → dark → match system. */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const Icon = theme === "light" ? Sun : theme === "dark" ? Moon : Monitor;

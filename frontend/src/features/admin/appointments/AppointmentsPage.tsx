@@ -18,7 +18,6 @@ import { AppointmentPanel, shortId } from "./AppointmentPanel";
 
 const PAGE_SIZE = 20;
 
-/** The date filter options, as "from" and "to" days (IST). */
 function dateRange(range: string) {
   if (range === "today") return { from: daysFromToday(0), to: daysFromToday(0) };
   if (range === "upcoming") return { from: daysFromToday(0), to: daysFromToday(7) };
@@ -27,7 +26,6 @@ function dateRange(range: string) {
   return {};
 }
 
-/** Every consultation on the platform. Times are shown in India Standard Time. */
 export default function AppointmentsPage() {
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState("");

@@ -10,18 +10,14 @@ interface ConfirmDialogProps {
   onClose: () => void;
   title: string;
   body: string;
-  /** The button text says exactly what happens, e.g. "Block user" (design doc 13). */
   confirmLabel: string;
   cancelLabel?: string;
   danger?: boolean;
-  /** When set, the admin must type a reason of at least 10 characters. */
   reasonLabel?: string;
   reasonHint?: string;
-  /** Runs when the admin confirms. The dialog shows a spinner until it finishes. */
   onConfirm: (reason: string) => Promise<void> | void;
 }
 
-/** Asks "are you sure?" before an action that can't easily be undone. */
 export function ConfirmDialog({
   open,
   onClose,

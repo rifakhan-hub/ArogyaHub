@@ -1,7 +1,6 @@
 import { ChevronDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-// Shared look for text boxes and dropdowns. A red border shows when aria-invalid is set.
 const fieldClass =
   "w-full rounded-md border border-border-strong bg-surface text-body text-text placeholder:text-subtle transition-colors hover:border-stone-400 focus-visible:border-focus focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30 disabled:bg-surface-muted aria-[invalid=true]:border-danger";
 
@@ -13,7 +12,6 @@ export function Textarea({ className, ...props }: React.ComponentProps<"textarea
   return <textarea className={cn(fieldClass, "px-3 py-2 leading-6", className)} {...props} />;
 }
 
-/** A search box with a magnifier icon and a clear button. */
 export function SearchBox({
   value,
   onChange,
@@ -53,7 +51,6 @@ type SelectProps = Omit<React.ComponentProps<"select">, "onChange"> & {
   onChange: (value: string) => void;
 };
 
-/** A normal <select> with our styling. Give it an aria-label or a <label>. */
 export function Select({ options, onChange, className, ...props }: SelectProps) {
   return (
     <div className={cn("relative", className)}>

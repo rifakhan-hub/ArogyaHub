@@ -1,4 +1,3 @@
-// Mock numbers and charts for the overview page, computed from the sample data.
 import { http, HttpResponse } from "msw";
 import type { Analytics, AppointmentStatus } from "@/api/types";
 import { db } from "../db";

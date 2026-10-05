@@ -1,4 +1,3 @@
-// Mock audit log with filters.
 import { http, HttpResponse } from "msw";
 import type { AuditLog } from "@/api/types";
 import { db } from "../db";

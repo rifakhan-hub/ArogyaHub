@@ -23,11 +23,9 @@ const REASON_MESSAGE = "Give a reason of at least 10 characters. It is sent to t
 interface ReviewPanelProps {
   doctorId: string;
   onClose: () => void;
-  /** Called after approve / reject / suspend, to move on. */
   onDecided: () => void;
 }
 
-/** Side panel for checking one doctor and approving, rejecting, suspending or reinstating them. */
 export function ReviewPanel({ doctorId, onClose, onDecided }: ReviewPanelProps) {
   const { data: doctor, error, reload } = useApi<Doctor>(`/admin/doctors/${doctorId}`);
 
@@ -64,7 +62,7 @@ function DoctorReview({ doctor: d, onDecided }: { doctor: Doctor; onDecided: () 
       toast.success(messages[action]);
       setSuspendOpen(false);
       onDecided();
-      refreshData(); // update the list, the counts and the sidebar badge
+      refreshData();
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

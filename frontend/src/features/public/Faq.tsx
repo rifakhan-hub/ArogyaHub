@@ -1,7 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { FAQS } from "./content";
 
-/** Common questions. Uses the browser's own <details> element, so it opens and closes with the keyboard too. */
 export function Faq() {
   return (
     <section id="faq" className="scroll-mt-16 border-t border-border py-20">

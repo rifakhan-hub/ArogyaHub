@@ -1,5 +1,3 @@
-"""Every error is sent as { "error": { "code", "message" } }, the format the frontend reads."""
-
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -7,8 +5,6 @@ from starlette.exceptions import HTTPException
 
 
 class AppError(Exception):
-    """Raise this in a route to send an error the frontend can show."""
-
     def __init__(self, status: int, code: str, message: str):
         self.status = status
         self.code = code

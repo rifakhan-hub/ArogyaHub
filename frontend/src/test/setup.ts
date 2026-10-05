@@ -5,10 +5,8 @@ import { setAccessToken } from "@/api/client";
 import { resetDb } from "@/mocks/db";
 import { server } from "./server";
 
-// the first test in a file also downloads the lazy page code, so give it a bit longer
 configure({ asyncUtilTimeout: 10000 });
 
-// jsdom (the fake browser used by tests) doesn't have these, so add simple versions
 window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
 window.matchMedia ??= ((query: string) => ({
   matches: false,
@@ -26,7 +24,7 @@ HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 beforeEach(() => {
-  resetDb(); // fresh sample data for every test
+  resetDb();
   localStorage.clear();
   setAccessToken(null);
 });

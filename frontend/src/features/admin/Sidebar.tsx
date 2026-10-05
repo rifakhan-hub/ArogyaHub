@@ -6,7 +6,6 @@ import { useApi } from "@/hooks/useApi";
 import { cn } from "@/lib/cn";
 import { env } from "@/lib/env";
 
-/** The admin sections, in menu order (design doc 8.1). */
 const NAV_ITEMS = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
@@ -16,12 +15,7 @@ const NAV_ITEMS = [
   { to: "/admin/audit", label: "Audit log", icon: ScrollText },
 ];
 
-/**
- * The dark menu on the left (design doc 2.3: stone-800 for the admin console).
- * Shown fixed on large screens, and inside a slide-out panel on phones.
- */
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  // only the counts are needed here, for the badge on "Verifications"
   const pending = useApi<DoctorList>("/admin/doctors", { status: "pending", page_size: 1 }).data?.counts.pending ?? 0;
 
   return (

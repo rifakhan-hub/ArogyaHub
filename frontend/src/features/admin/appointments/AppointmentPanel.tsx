@@ -16,12 +16,10 @@ import { cn } from "@/lib/cn";
 import { formatDateTime, formatTime, timeAgo } from "@/lib/dates";
 import { formatINR, plural } from "@/lib/format";
 
-/** "…66f1024" -> "#6F1024": the short ID shown in lists. */
 export const shortId = (id: string) => `#${id.slice(-6).toUpperCase()}`;
 
 type Override = AppointmentOverride["status"];
 
-// The three things an admin can do to a consultation, and the confirm dialog text for each.
 const OVERRIDES: Record<Override, { button: string; icon: typeof Ban; title: string; body: string; done: string }> = {
   completed: {
     button: "Mark completed",
@@ -46,7 +44,6 @@ const OVERRIDES: Record<Override, { button: string; icon: typeof Ban; title: str
   },
 };
 
-/** Side panel with one consultation: details, timeline and admin overrides. */
 export function AppointmentPanel({ appointmentId, onClose }: { appointmentId: string; onClose: () => void }) {
   const { data, error, reload } = useApi<Appointment>(`/admin/appointments/${appointmentId}`);
 
@@ -71,7 +68,6 @@ function AppointmentDetails({ appointment: a }: { appointment: Appointment }) {
   const started = Date.parse(a.start_time) <= openedAt;
   const isOpen = a.status === "scheduled" || a.status === "in_progress";
 
-  // which overrides make sense for the current status
   const allowed: Override[] = [];
   if (a.status === "in_progress" || a.status === "no_show") allowed.push("completed");
   if (isOpen && started) allowed.push("no_show");

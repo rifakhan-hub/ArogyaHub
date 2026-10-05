@@ -1,6 +1,5 @@
 import { cn } from "@/lib/cn";
 
-/** The brand mark: the time-ribbon motif, three slots with the middle one selected (design doc 1.3). */
 export function LogoMark({ className = "size-8" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={cn("shrink-0", className)} aria-hidden>
@@ -12,10 +11,6 @@ export function LogoMark({ className = "size-8" }: { className?: string }) {
   );
 }
 
-/**
- * Mark plus "AarogyaHub" and a small line under it ("Admin console" unless `subtitle` says otherwise).
- * `onDark` is for the dark sidebar and login panel.
- */
 export function Logo({ onDark = true, subtitle = "Admin console" }: { onDark?: boolean; subtitle?: string }) {
   return (
     <span className="inline-flex items-center gap-2.5">

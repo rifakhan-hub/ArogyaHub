@@ -18,10 +18,8 @@ import { ReviewPanel } from "./ReviewPanel";
 
 const PAGE_SIZE = 20;
 
-/** The doctor verification queue: pick a doctor, check their documents, approve or reject. */
 export default function VerificationsPage() {
   const [searchParams] = useSearchParams();
-  // links from other pages can open a doctor directly: /admin/verifications?open=<id>&status=all
   const [status, setStatus] = useState(searchParams.get("status") ?? "pending");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -36,7 +34,6 @@ export default function VerificationsPage() {
   const counts = data?.counts;
   const rows = data?.items;
 
-  // after a decision on the Pending tab, move on to the next doctor in the list
   function openNextDoctor() {
     const index = rows?.findIndex((d) => d.id === openId) ?? -1;
     const next = status === "pending" && index >= 0 ? rows?.[index + 1] : undefined;
@@ -150,7 +147,6 @@ export default function VerificationsPage() {
         <Pagination page={page} pageSize={PAGE_SIZE} total={data?.total ?? 0} onChange={setPage} />
       </Card>
 
-      {/* `key` gives each doctor a fresh panel, so nothing is left over from the previous one */}
       {openId && <ReviewPanel key={openId} doctorId={openId} onClose={() => setOpenId(null)} onDecided={openNextDoctor} />}
     </div>
   );

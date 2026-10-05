@@ -2,8 +2,6 @@ import { cn } from "@/lib/cn";
 
 type Cell = { start: string; len: number; state: "free" | "booked" | "selected" | "past" };
 
-// Two availability blocks drawn at the same minute scale, so 15-minute slots look longer than
-// 10-minute ones: the signature time ribbon (design doc section 7), used here as a brand motif.
 const BLOCKS: { label: string; cells: Cell[] }[] = [
   {
     label: "Morning, 10-minute slots",
@@ -45,7 +43,7 @@ const cellClass: Record<Cell["state"], string> = {
 };
 
 export function RibbonMotif({ className }: { className?: string }) {
-  const minuteWidth = 100 / 120; // both blocks span 120 minutes in this illustration
+  const minuteWidth = 100 / 120;
   return (
     <div className={cn("flex flex-col gap-6", className)} aria-hidden>
       {BLOCKS.map((b) => (

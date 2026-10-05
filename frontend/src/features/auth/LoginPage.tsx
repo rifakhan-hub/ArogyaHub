@@ -11,14 +11,12 @@ import { env } from "@/lib/env";
 import { isEmail } from "@/lib/validators";
 import { RibbonMotif } from "./RibbonMotif";
 
-// the demo admin from src/mocks/seed.ts (only offered while the fake backend is on)
 const DEMO = { email: "admin@aarogyahub.in", password: "Admin@123" };
 
 export default function LoginPage() {
   const { user, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  // after logging in, go back to the page the admin asked for
   const next = searchParams.get("next")?.startsWith("/admin") ? searchParams.get("next")! : "/admin";
 
   const [email, setEmail] = useState("");
@@ -28,7 +26,6 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // already signed in (for example after a reload)? skip the form
   if (user?.role === "admin" && !submitting) return <Navigate to={next} replace />;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -53,7 +50,6 @@ export default function LoginPage() {
 
   return (
     <div className="grid min-h-dvh bg-bg lg:grid-cols-[5fr_7fr]">
-      {/* left: brand panel (large screens only) */}
       <section className="hidden flex-col justify-between bg-stone-800 p-10 text-stone-50 lg:flex xl:p-14">
         <Logo />
         <div className="flex max-w-lg flex-col gap-10">
@@ -71,7 +67,6 @@ export default function LoginPage() {
         </p>
       </section>
 
-      {/* right: the form */}
       <main className="flex flex-col px-4 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <span className="lg:invisible">

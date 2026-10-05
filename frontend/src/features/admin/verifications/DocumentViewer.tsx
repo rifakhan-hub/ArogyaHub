@@ -8,10 +8,6 @@ import { formatBytes } from "@/lib/format";
 
 const DOC_TYPES = { licence: "Registration certificate", degree: "Degree", id: "Identity proof" };
 
-/**
- * Shows the doctor's uploaded documents one at a time, with previous / next buttons.
- * Each document is opened through a short-lived secure link, and the backend logs every view.
- */
 export function DocumentViewer({ doctorId, documents }: { doctorId: string; documents: DoctorDocument[] }) {
   const [index, setIndex] = useState(0);
   const doc = documents[index];

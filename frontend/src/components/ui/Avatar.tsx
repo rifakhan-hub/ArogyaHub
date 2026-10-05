@@ -14,7 +14,6 @@ const sizes = {
   lg: "size-14 text-h4",
 };
 
-/** "Dr. Simran Kaur" -> "SK" */
 function initials(name: string) {
   const words = name.replace(/^dr\.?\s+/i, "").split(/\s+/).filter(Boolean);
   const first = words[0]?.[0] ?? "";
@@ -22,14 +21,12 @@ function initials(name: string) {
   return (first + last).toUpperCase();
 }
 
-/** The same name always gets the same colour. */
 function colourFor(name: string) {
   let hash = 0;
   for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return colours[hash % colours.length];
 }
 
-/** A circle with someone's initials (design doc 6.2). */
 export function Avatar({ name, size = "md", className }: { name: string; size?: keyof typeof sizes; className?: string }) {
   return (
     <span

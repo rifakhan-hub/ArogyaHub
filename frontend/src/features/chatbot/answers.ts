@@ -1,10 +1,7 @@
-// The assistant's answers, until the backend chatbot (POST /chatbot, architecture doc section 10) is ready.
-// Each topic lists words to look for in the question. The first topic that matches gives the reply.
 import { SYMPTOM_WORDS } from "@/features/public/content";
 
 const TOPICS: { words: string[]; reply: string }[] = [
   {
-    // safety first: the assistant never handles urgent symptoms itself (architecture doc 10, guardrails)
     words: ["chest pain", "can't breathe", "cannot breathe", "unconscious", "fainted", "heavy bleeding", "heart attack", "stroke", "suicide"],
     reply: "This sounds urgent. Please call 112 or go to the nearest hospital now. An online consultation isn't the right place for this.",
   },
@@ -56,20 +53,16 @@ const TOPICS: { words: string[]; reply: string }[] = [
 const FALLBACK =
   "I'm not sure about that yet. I can help with booking, fees, reports, prescriptions and video consultations. For anything else, write to help@aarogyahub.in.";
 
-/** True when `word` starts a word in `text`: "book" matches "booking", but "hi" doesn't match "child". */
 function mentions(text: string, word: string) {
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`(^|[^a-z])${escaped}`).test(text);
 }
 
-/** Picks the assistant's reply to a question. */
 export function answer(question: string) {
   const text = question.toLowerCase();
   const topic = TOPICS.find((t) => t.words.some((word) => mentions(text, word)));
   if (topic) return topic.reply;
 
-  // a symptom: suggest the right kind of doctor (never a diagnosis).
-  // A specialist wins over a General Physician, so "my child has fever" points to Paediatrics.
   const matching = Object.entries(SYMPTOM_WORDS)
     .filter(([, words]) => words.some((word) => mentions(text, word)))
     .map(([speciality]) => speciality);

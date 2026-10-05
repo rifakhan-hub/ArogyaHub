@@ -1,4 +1,3 @@
-// End-to-end checks of the main admin flows, against the fake backend in src/mocks.
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
@@ -44,7 +43,6 @@ describe("login", () => {
 });
 
 describe("doctor verification", () => {
-  // the queue is sorted oldest first
   const pendingDoctors = () =>
     db.doctors.filter((d) => d.verification_status === "pending").sort((a, b) => a.submitted_at.localeCompare(b.submitted_at));
 

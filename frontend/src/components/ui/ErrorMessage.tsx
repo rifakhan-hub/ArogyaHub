@@ -2,7 +2,6 @@ import { CloudOff, RotateCw } from "lucide-react";
 import type { ApiError } from "@/api/client";
 import { Button } from "./Button";
 
-/** Says what went wrong and offers a retry. The request ID helps support find the problem. */
 export function ErrorMessage({ error, onRetry }: { error: ApiError; onRetry?: () => void }) {
   return (
     <div role="alert" className="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">

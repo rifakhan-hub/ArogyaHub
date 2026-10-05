@@ -10,11 +10,9 @@ interface HeroProps {
   onQueryChange: (value: string) => void;
   speciality: string;
   onSpecialityChange: (value: string) => void;
-  /** Scrolls down to the doctors. */
   onSearch: () => void;
 }
 
-/** The top of the page: headline, symptom search, and the doctors available now (design doc 8.2). */
 export function Hero({ query, onQueryChange, speciality, onSpecialityChange, onSearch }: HeroProps) {
   const availableNow = DOCTORS.slice(0, 3);
 
@@ -28,7 +26,6 @@ export function Hero({ query, onQueryChange, speciality, onSpecialityChange, onS
             ask our AI assistant anything, any time.
           </p>
 
-          {/* symptom search */}
           <form
             role="search"
             onSubmit={(e) => {
@@ -95,7 +92,6 @@ export function Hero({ query, onQueryChange, speciality, onSpecialityChange, onS
           </ul>
         </div>
 
-        {/* doctors you could see in the next hour */}
         <Card className="p-6">
           <h2 className="text-h4 text-text">Available in the next hour</h2>
           <ul className="mt-4 flex flex-col divide-y divide-border">

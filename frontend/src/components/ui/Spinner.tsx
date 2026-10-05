@@ -1,6 +1,5 @@
 import { Loader2 } from "lucide-react";
 
-/** A spinning circle with "Loading…", centred in the space it's given. */
 export function Spinner({ fullScreen }: { fullScreen?: boolean }) {
   return (
     <div

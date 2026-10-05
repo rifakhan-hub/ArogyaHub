@@ -3,13 +3,10 @@ import { buildSeed, type MockDb, oid, requestId } from "./seed";
 
 export let db: MockDb = buildSeed();
 
-/** Fresh data for each test. */
 export function resetDb(now?: Date) {
   db = buildSeed(now);
 }
 
-// The real backend keeps the refresh token in an HttpOnly cookie. The mock stands in for that
-// cookie with a localStorage entry so a page reload keeps you signed in.
 const SESSION_KEY = "ah-mock-refresh";
 const memSession = new Map<string, string>();
 export const mockSession = {

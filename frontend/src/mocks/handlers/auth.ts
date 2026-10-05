@@ -1,4 +1,3 @@
-// Mock sign-in, token refresh and sign-out.
 import { http, HttpResponse } from "msw";
 import type { LoginRequest } from "@/api/types";
 import { accessTokenFor, db, mockSession, userFromToken, writeAudit } from "../db";

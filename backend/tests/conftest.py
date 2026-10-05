@@ -1,5 +1,3 @@
-"""Each test gets a fresh in-memory SQLite database, so no MySQL server is needed."""
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -13,8 +11,7 @@ from app.models import Role, User
 
 
 @pytest.fixture
-def client():
-    # one shared in-memory database; FastAPI runs routes in worker threads
+def session():
     engine = create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
     Base.metadata.create_all(engine)
     TestSession = sessionmaker(engine)
@@ -35,10 +32,14 @@ def client():
             yield db
 
     app.dependency_overrides[get_db] = test_db
-    yield TestClient(app)
+    yield TestSession
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+def client(session):
+    return TestClient(app)
+
+
 def find_id(client, email):
-    """The id of the user with this email, looked up through the API."""
     return client.get("/api/v1/admin/users", params={"q": email}).json()["items"][0]["id"]

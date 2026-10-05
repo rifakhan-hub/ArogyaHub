@@ -1,14 +1,13 @@
-"""What the users endpoints send and receive. The shapes match frontend/src/api/types.ts."""
-
 from datetime import UTC, datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models.user import Role
 
 
 class UserOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)  # lets UserOut.model_validate(user) read a User row
+    model_config = ConfigDict(from_attributes=True)
 
     id: str
     name: str
@@ -30,7 +29,6 @@ class UserOut(BaseModel):
     @field_validator("created_at", "last_login_at")
     @classmethod
     def as_utc(cls, value: datetime | None):
-        # dates are stored in UTC without a timezone; mark them as UTC so the browser converts them correctly
         return value.replace(tzinfo=UTC) if value and value.tzinfo is None else value
 
 
@@ -51,3 +49,20 @@ class UserDetail(UserOut):
 class BlockUserRequest(BaseModel):
     blocked: bool
     reason: str | None = Field(default=None, max_length=500)
+
+
+class RegisterRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=150)
+    email: EmailStr
+    phone: str | None = Field(default=None, pattern=r"^\+?[0-9]{10,15}$")
+    city: str | None = Field(default=None, max_length=100)
+    role: Literal["patient", "doctor"]
+    password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("name", "city", "phone", mode="before")
+    @classmethod
+    def strip_blank(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            return value or None
+        return value

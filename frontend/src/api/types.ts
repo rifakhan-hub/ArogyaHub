@@ -1,14 +1,3 @@
-/**
- * The shapes of the data the backend sends and receives (architecture doc sections 6 and 8).
- *
- * Endpoints used here that the architecture doc does not list (agree these with the backend team):
- *   GET  /admin/doctors/{id}                          doctor with documents
- *   GET  /admin/doctors/{id}/documents/{doc_id}/view  short-lived signed link (audited)
- *   GET  /admin/users/{id}
- *   GET  /admin/appointments                          list with filters
- *   POST /admin/kb/articles/{id}/publish | /unpublish
- */
-
 export type Role = "patient" | "doctor" | "admin";
 export type VerificationStatus = "pending" | "verified" | "rejected" | "suspended";
 export type AppointmentStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "no_show";
@@ -32,10 +21,9 @@ export interface ListParams {
   page?: number;
   page_size?: number;
   q?: string;
-  sort?: string; // "field" or "-field"
+  sort?: string;
 }
 
-/* ---------- auth / users ---------- */
 
 export interface User {
   id: string;
@@ -62,6 +50,15 @@ export interface TokenResponse {
   user: User;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  phone: string | null;
+  city: string | null;
+  role: "patient" | "doctor";
+  password: string;
+}
+
 export interface UserListParams extends ListParams {
   role?: Role;
   status?: "active" | "blocked";
@@ -84,7 +81,6 @@ export interface BlockUserRequest {
   reason?: string;
 }
 
-/* ---------- doctors / verification ---------- */
 
 export interface DoctorDocument {
   id: string;
@@ -107,7 +103,7 @@ export interface Doctor {
   languages: string[];
   experience_years: number;
   license_number: string;
-  council: string; // short code, e.g. PMC
+  council: string;
   council_name: string;
   verification_status: VerificationStatus;
   rejection_reason: string | null;
@@ -143,7 +139,6 @@ export interface SignedUrl {
   expires_at: string;
 }
 
-/* ---------- appointments ---------- */
 
 export interface PersonRef {
   id: string;
@@ -161,7 +156,7 @@ export interface Appointment {
   id: string;
   patient: PersonRef;
   doctor: PersonRef & { specialization: string };
-  start_time: string; // UTC ISO
+  start_time: string;
   end_time: string;
   slot_duration_min: 5 | 10 | 15 | 20 | 30;
   status: AppointmentStatus;
@@ -176,7 +171,7 @@ export interface Appointment {
 
 export interface AppointmentListParams extends ListParams {
   status?: AppointmentStatus;
-  from?: string; // YYYY-MM-DD (IST)
+  from?: string;
   to?: string;
 }
 
@@ -185,7 +180,6 @@ export interface AppointmentOverride {
   reason: string;
 }
 
-/* ---------- knowledge base ---------- */
 
 export interface KbArticle {
   id: string;
@@ -214,12 +208,11 @@ export type KbArticleInput = Pick<
   "title" | "slug" | "category" | "audience" | "body_md" | "reviewer"
 >;
 
-/* ---------- audit ---------- */
 
 export interface AuditLog {
   id: string;
-  actor: (PersonRef & { role: Role }) | null; // null = system
-  action: string; // e.g. doctor.approve
+  actor: (PersonRef & { role: Role }) | null;
+  action: string;
   entity_type: "doctor" | "user" | "appointment" | "kb_article" | "report" | "auth";
   entity_id: string;
   metadata: Record<string, unknown>;
@@ -235,7 +228,6 @@ export interface AuditListParams extends ListParams {
   to?: string;
 }
 
-/* ---------- analytics ---------- */
 
 export interface Analytics {
   kpis: {

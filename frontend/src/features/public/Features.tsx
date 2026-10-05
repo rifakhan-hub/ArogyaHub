@@ -24,7 +24,6 @@ const FEATURES = [
   },
 ];
 
-/** Why AarogyaHub: the four things the product is built around (architecture doc). */
 export function Features() {
   return (
     <section id="features" className="scroll-mt-16 border-t border-border py-20">

@@ -10,9 +10,7 @@ import { PublicFooter } from "./PublicFooter";
 import { PublicHeader } from "./PublicHeader";
 import { Stats } from "./Stats";
 
-/** The public home page at "/" (design doc 8.2). */
 export default function HomePage() {
-  // the hero search filters the doctor cards further down
   const [query, setQuery] = useState("");
   const [speciality, setSpeciality] = useState("");
 

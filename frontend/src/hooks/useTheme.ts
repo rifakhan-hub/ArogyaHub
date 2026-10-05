@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 export type Theme = "light" | "dark" | "system";
-const STORAGE_KEY = "ah-theme"; // also read by the script in index.html, so the page never flashes
+const STORAGE_KEY = "ah-theme";
 
 function savedTheme(): Theme {
   try {
@@ -12,7 +12,14 @@ function savedTheme(): Theme {
   }
 }
 
-/** Light, dark or "system" (follows the computer's setting). The choice is remembered. */
+function saveTheme(theme: Theme) {
+  try {
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    return;
+  }
+}
+
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>(savedTheme);
 
@@ -23,11 +30,7 @@ export function useTheme() {
       document.documentElement.dataset.theme = dark ? "dark" : "light";
     };
     apply();
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch {
-      // private windows may block storage; the theme still works for this visit
-    }
+    saveTheme(theme);
     media?.addEventListener("change", apply);
     return () => media?.removeEventListener("change", apply);
   }, [theme]);

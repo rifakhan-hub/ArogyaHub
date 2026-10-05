@@ -17,7 +17,6 @@ import { auditSubject, auditVerb, ENTITY_ICONS, isSensitive } from "../audit/aud
 import { ConsultationsChart, SignupsChart, SpecialityBars } from "./Charts";
 import { StatCard } from "./StatCard";
 
-/** The admin home page: today's numbers, charts, doctors waiting and recent activity. */
 export default function OverviewPage() {
   const { user } = useAuth();
   const { data, error, reload } = useApi<Analytics>("/admin/analytics");
@@ -114,7 +113,6 @@ export default function OverviewPage() {
   );
 }
 
-/** The five doctors who have waited longest for verification. */
 function WaitingDoctors() {
   const { data, error, reload } = useApi<DoctorList>("/admin/doctors", { status: "pending", page_size: 5 });
 
@@ -162,7 +160,6 @@ function WaitingDoctors() {
   );
 }
 
-/** The latest six entries from the audit log. */
 function RecentActivity() {
   const { data, error, reload } = useApi<Paginated<AuditLog>>("/admin/audit-logs", { page_size: 6 });
 

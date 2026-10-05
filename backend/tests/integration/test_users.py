@@ -14,7 +14,7 @@ def test_list_users(client):
     body = client.get(URL).json()
     assert body["total"] == 4
     assert body["page"] == 1 and body["page_size"] == 20
-    assert body["items"][0]["created_at"].endswith("Z")  # dates are sent as UTC
+    assert body["items"][0]["created_at"].endswith("Z")
 
     assert sorted(names(role="patient")) == ["Priya Sharma", "Rahul Verma"]
     assert names(q="mehta") == ["Dr. Anjali Mehta"]

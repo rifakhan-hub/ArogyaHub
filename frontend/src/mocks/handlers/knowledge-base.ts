@@ -1,4 +1,3 @@
-// Mock chatbot knowledge base: articles, editing, publish (re-index) and delete.
 import { delay, http, HttpResponse } from "msw";
 import type { KbArticle, KbArticleInput } from "@/api/types";
 import { db, writeAudit } from "../db";
@@ -69,7 +68,6 @@ export const knowledgeBaseHandlers = [
       return fail(409, "SLUG_TAKEN", "Another article already uses this slug. Change it to something unique.", { field: "slug" });
     Object.assign(a, body, { updated_at: new Date().toISOString() });
     if (a.status === "published") {
-      // editing a published article deletes its old chunks and re-embeds (arch doc 10.1)
       a.chunk_count = chunkCount(a.body_md);
       a.last_indexed_at = new Date().toISOString();
     }
@@ -83,7 +81,7 @@ export const knowledgeBaseHandlers = [
   }),
 
   http.post(`${API}/admin/kb/articles/:id/publish`, async ({ request, params }) => {
-    await delay(import.meta.env.MODE === "test" ? 0 : 1200); // embedding takes a moment
+    await delay(import.meta.env.MODE === "test" ? 0 : 1200);
     const g = requireAdmin(request);
     if (g.error) return g.error;
     const a = db.kb.find((x) => x.id === params.id);

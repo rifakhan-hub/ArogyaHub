@@ -2,7 +2,6 @@ import { getAuditLogs } from "@/api/admin";
 import type { AuditListParams, AuditLog } from "@/api/types";
 import { auditVerb } from "./auditText";
 
-/** Puts a value in quotes when it contains a comma, quote or line break (the CSV rules). */
 function csvCell(value: unknown) {
   const text = value == null ? "" : typeof value === "string" ? value : JSON.stringify(value);
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
@@ -30,7 +29,6 @@ export function toCsv(logs: AuditLog[]) {
   return [header, ...lines].join("\r\n");
 }
 
-/** Loads every page that matches the filters, then downloads them as a .csv file. Returns the count. */
 export async function exportAuditCsv(filters: AuditListParams) {
   const logs: AuditLog[] = [];
   for (let page = 1; page <= 50; page++) {
@@ -39,7 +37,6 @@ export async function exportAuditCsv(filters: AuditListParams) {
     if (logs.length >= res.total || res.items.length === 0) break;
   }
 
-  // a "byte order mark" at the start makes Excel read the file as UTF-8 (for ₹ and Indian names)
   const BOM = "﻿";
   const file = new Blob([BOM + toCsv(logs)], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");

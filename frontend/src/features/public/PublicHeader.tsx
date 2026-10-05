@@ -10,7 +10,6 @@ const LINKS = [
   { href: "#for-doctors", label: "For doctors" },
 ];
 
-/** The top bar of the home page. It sticks to the top while you scroll. */
 export function PublicHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface">
@@ -35,6 +34,9 @@ export function PublicHeader() {
           <ThemeToggle />
           <Link to="/login" className={buttonClass("ghost", "sm")}>
             Log in
+          </Link>
+          <Link to="/register" className={buttonClass("outline", "sm")}>
+            Sign up
           </Link>
           <a href="#doctors" className={buttonClass("primary", "sm")}>
             Book a consultation

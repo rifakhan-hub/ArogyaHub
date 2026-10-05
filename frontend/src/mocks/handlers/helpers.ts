@@ -1,4 +1,3 @@
-// Shared bits for the mock API: error responses, the admin check, paging, sorting and search.
 import { delay, HttpResponse } from "msw";
 import type { User } from "@/api/types";
 import { userFromToken } from "../db";

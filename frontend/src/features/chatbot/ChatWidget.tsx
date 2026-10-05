@@ -13,10 +13,6 @@ const WELCOME: Message = {
   text: "Hi, I'm the AarogyaHub assistant. Ask me about booking a doctor, fees, your reports or how video consultations work.",
 };
 
-/**
- * The AI assistant: a round button in the bottom-right corner that opens a chat panel.
- * (Architecture doc: features/chatbot/ChatWidget.tsx.)
- */
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
@@ -25,7 +21,6 @@ export function ChatWidget() {
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
 
-  // focus the text box when the panel opens; Esc closes it
   useEffect(() => {
     if (!open) return;
     input.current?.focus();
@@ -34,7 +29,6 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // keep the newest message in view
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });
   }, [messages, thinking]);
@@ -45,7 +39,6 @@ export function ChatWidget() {
     setMessages((m) => [...m, { from: "you", text }]);
     setDraft("");
     setThinking(true);
-    // a short pause so the reply feels natural
     setTimeout(() => {
       setMessages((m) => [...m, { from: "assistant", text: answer(text) }]);
       setThinking(false);
@@ -60,7 +53,6 @@ export function ChatWidget() {
           aria-label="AarogyaHub AI assistant"
           className="fixed bottom-24 right-6 z-50 flex h-[560px] max-h-[calc(100dvh-8rem)] w-[400px] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-3"
         >
-          {/* header */}
           <div className="flex items-center gap-3 border-b border-border px-5 py-4">
             <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-on-primary">
               <Sparkles className="size-5" aria-hidden />
@@ -82,7 +74,6 @@ export function ChatWidget() {
             </button>
           </div>
 
-          {/* conversation */}
           <div ref={list} className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4" aria-live="polite">
             {messages.map((message, i) => (
               <div key={i} className={cn("flex gap-2", message.from === "you" && "justify-end")}>
@@ -115,7 +106,6 @@ export function ChatWidget() {
               </div>
             )}
 
-            {/* quick questions, until the visitor asks their own */}
             {messages.length === 1 && (
               <div className="mt-1 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((suggestion) => (
@@ -132,7 +122,6 @@ export function ChatWidget() {
             )}
           </div>
 
-          {/* message box */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -167,7 +156,6 @@ export function ChatWidget() {
         </div>
       )}
 
-      {/* the round button that opens and closes the assistant */}
       <button
         type="button"
         onClick={() => setOpen(!open)}

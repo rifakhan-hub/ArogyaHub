@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/Card";
 import { formatINR } from "@/lib/format";
 import { DOCTORS, type SampleDoctor, SYMPTOM_WORDS } from "./content";
 
-/** Keeps the doctors who match the typed symptom (or speciality name) and the chosen chip. */
 function matches(doctor: SampleDoctor, query: string, speciality: string) {
   if (speciality && doctor.speciality !== speciality) return false;
   const words = query.trim().toLowerCase();
@@ -20,7 +19,6 @@ interface DoctorCardsProps {
   onClear: () => void;
 }
 
-/** The doctors, filtered by the search at the top of the page. */
 export function DoctorCards({ query, speciality, onClear }: DoctorCardsProps) {
   const doctors = DOCTORS.filter((d) => matches(d, query, speciality));
   const filtered = query.trim() || speciality;

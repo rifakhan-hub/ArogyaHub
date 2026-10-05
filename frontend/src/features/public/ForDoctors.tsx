@@ -7,7 +7,6 @@ const POINTS = [
   "Get verified once, then patients across India can find you",
 ];
 
-/** The section for doctors who want to join. */
 export function ForDoctors() {
   return (
     <section id="for-doctors" className="scroll-mt-16 border-t border-border bg-surface py-20">

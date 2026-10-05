@@ -6,28 +6,22 @@ import { EmptyState } from "./EmptyState";
 import { ErrorMessage } from "./ErrorMessage";
 import { Spinner } from "./Spinner";
 
-/** One column: its heading and what to show in each cell. */
 export interface Column<T> {
   header: string;
   cell: (row: T) => React.ReactNode;
-  /** Extra classes, e.g. "hidden md:table-cell" to hide the column on phones. */
   className?: string;
 }
 
 interface TableProps<T> {
-  /** Read by screen readers. */
   caption: string;
   columns: Column<T>[];
   rows: T[] | undefined;
   loading: boolean;
   error?: ApiError;
   onRetry?: () => void;
-  /** Shown when there are no rows. */
   empty?: React.ReactNode;
   onRowClick?: (row: T) => void;
-  /** Highlights the row whose side panel is open. */
   activeId?: string | null;
-  /** Shows an extra row under a row, e.g. the audit log details. */
   renderExpanded?: (row: T) => React.ReactNode;
 }
 
@@ -57,7 +51,6 @@ export function Table<T extends { id: string }>({
       const expanded = renderExpanded?.(row);
       return (
         <Fragment key={row.id}>
-          {/* clicking a row is a mouse shortcut; each row also has a real button or link for keyboards */}
           <tr
             onClick={(e) => {
               if (onRowClick && !(e.target as HTMLElement).closest("button, a")) onRowClick(row);

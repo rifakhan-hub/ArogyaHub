@@ -1,4 +1,3 @@
-// Mock doctor verification: the queue, one doctor, their documents and approve / reject / suspend.
 import { http, HttpResponse } from "msw";
 import type { VerificationStatus, VerifyRequest } from "@/api/types";
 import { db, writeAudit } from "../db";

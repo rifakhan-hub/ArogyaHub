@@ -1,8 +1,3 @@
-/**
- * Deterministic seed data for the MSW mock backend, modelled on backend/scripts/seed.py
- * (one admin, verified and pending doctors, demo patients, sample KB articles).
- * All names are fictional. Times are generated relative to "now" so the console always looks live.
- */
 import type {
   Appointment,
   AppointmentStatus,
@@ -16,10 +11,8 @@ import type {
 } from "@/api/types";
 import { kbSeed } from "./kb-content";
 
-/** Demo login for the mock backend only. */
 export const DEMO_ADMIN = { email: "admin@aarogyahub.in", password: "Admin@123" } as const;
 
-// mulberry32: small seeded PRNG so every reload produces the same data
 function rng(seed: number) {
   return () => {
     seed |= 0;
@@ -42,7 +35,6 @@ const HOUR = 60 * MIN;
 const DAY = 24 * HOUR;
 const IST_OFFSET = 330 * MIN;
 
-/** UTC instant for an IST wall-clock time `dayOffset` days from today. */
 function istInstant(now: Date, dayOffset: number, hh: number, mm: number) {
   const istNow = new Date(now.getTime() + IST_OFFSET);
   const base = Date.UTC(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate() + dayOffset, hh, mm);
@@ -140,7 +132,6 @@ const phone = () => `+91 ${int(70000, 99999)} ${int(10000, 99999)}`;
 const ip = () => `${pick([49, 103, 106, 117, 122, 157, 182])}.${int(1, 254)}.${int(1, 254)}.${int(1, 254)}`;
 export const requestId = () => Array.from({ length: 12 }, () => "0123456789abcdef"[int(0, 15)]).join("");
 
-/** A mock licence/degree/ID image as an SVG data URL, clearly marked as a sample. */
 function documentSvg(kind: DocumentKind, doctor: { name: string; council: string; license: string; qual: string }) {
   const title =
     kind === "licence" ? "Certificate of registration" : kind === "degree" ? "Degree certificate" : "Government ID";
@@ -168,14 +159,13 @@ function documentSvg(kind: DocumentKind, doctor: { name: string; council: string
 }
 type DocumentKind = "licence" | "degree" | "id";
 
-/** Roughly 500-token chunks (arch doc 10.1): ~700 characters of Markdown each. */
 export const chunkCount = (md: string) => Math.max(1, Math.ceil(md.length / 700));
 
 export interface MockDb {
   users: User[];
-  passwords: Map<string, string>; // user id -> password (mock only)
+  passwords: Map<string, string>;
   doctors: Doctor[];
-  documentUrls: Map<string, string>; // document id -> data URL
+  documentUrls: Map<string, string>;
   appointments: Appointment[];
   kb: KbArticle[];
   audit: AuditLog[];
@@ -211,7 +201,6 @@ export function buildSeed(now = new Date()): MockDb {
     return u;
   };
 
-  // admins
   const admin = makeUser("Anjali Verma", "admin", 240, DEMO_ADMIN.email);
   admin.is_email_verified = true;
   admin.last_login_at = new Date(t - 2 * DAY).toISOString();
@@ -223,11 +212,9 @@ export function buildSeed(now = new Date()): MockDb {
   ];
   admins.forEach((a) => (a.is_email_verified = true));
 
-  // a non-admin demo account so the Forbidden screen can be exercised
   const demoPatient = makeUser("Harpreet Singh", "patient", 60, "patient@aarogyahub.in");
   passwords.set(demoPatient.id, "Patient@123");
 
-  // doctors: 7 pending, 26 verified, 4 rejected, 3 suspended
   const plan: VerificationStatus[] = [
     ...Array<VerificationStatus>(7).fill("pending"),
     ...Array<VerificationStatus>(26).fill("verified"),
@@ -306,10 +293,8 @@ export function buildSeed(now = new Date()): MockDb {
     }
   });
 
-  // patients
   const patients: User[] = [demoPatient];
   for (let i = 0; i < 150; i++) {
-    // slightly more recent sign-ups than old ones: steady growth
     const ago = Math.floor(Math.pow(rand(), 0.8) * 120);
     patients.push(makeUser(uniqueName(), "patient", ago));
   }
@@ -320,7 +305,6 @@ export function buildSeed(now = new Date()): MockDb {
   const suspendedDoctorUsers = doctors.filter((d) => d.verification_status === "suspended").map((d) => d.user_id);
   users.filter((u) => suspendedDoctorUsers.includes(u.id)).forEach((u) => (u.is_active = true));
 
-  // appointments: past 30 days to next 7 days for verified (and suspended, historically) doctors
   const bookable = doctors.filter((d) => d.verification_status === "verified" || d.verification_status === "suspended");
   const durations = [5, 10, 15, 20, 30] as const;
   for (const doc of bookable) {
@@ -394,7 +378,6 @@ export function buildSeed(now = new Date()): MockDb {
   }
   appointments.sort((a, b) => b.start_time.localeCompare(a.start_time));
 
-  // knowledge base
   const kb: KbArticle[] = kbSeed.map((a) => {
     const updated = new Date(t - int(1, 40) * DAY - int(0, 20) * HOUR);
     const author = pick(admins);
@@ -410,7 +393,6 @@ export function buildSeed(now = new Date()): MockDb {
     };
   });
 
-  // background audit activity: logins, report views, video tokens, KB edits, blocks
   const blocked = patients.slice(3, 9);
   blocked.forEach((p) =>
     audit.push({

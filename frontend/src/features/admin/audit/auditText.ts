@@ -1,5 +1,3 @@
-// Turns raw audit entries ("doctor.approve", metadata) into readable text and icons.
-// Used by the audit log page, the overview's "Recent activity" and the CSV export.
 import { BookOpenText, CalendarClock, FileText, KeyRound, type LucideIcon, ShieldCheck, UserRound } from "lucide-react";
 import type { AuditLog } from "@/api/types";
 
@@ -22,7 +20,6 @@ const VERBS: Record<string, string> = {
   "auth.login_failed": "Failed sign-in",
 };
 
-/** "doctor.approve" -> "Approved doctor". Unknown actions are shown as they are. */
 export function auditVerb(action: string) {
   return VERBS[action] ?? action;
 }
@@ -45,7 +42,6 @@ export const ENTITY_LABELS: Record<AuditLog["entity_type"], string> = {
   auth: "Auth",
 };
 
-/** Filter options: each group matches every action that starts with it, e.g. "doctor." */
 export const ACTION_GROUPS = [
   { value: "doctor", label: "Doctor verification" },
   { value: "user", label: "User blocking" },
@@ -56,12 +52,10 @@ export const ACTION_GROUPS = [
   { value: "auth", label: "Sign-ins" },
 ];
 
-/** Actions shown in red: failed sign-ins, blocks, rejections, suspensions, deletions. */
 export function isSensitive(action: string) {
   return ["auth.login_failed", "user.block", "doctor.suspend", "doctor.reject", "kb.delete"].includes(action);
 }
 
-/** Who or what the entry is about, taken from its metadata: a doctor's name, an article title, ... */
 export function auditSubject(log: AuditLog): string | null {
   const m = log.metadata;
   const text = (key: string) => (typeof m[key] === "string" ? (m[key] as string) : null);

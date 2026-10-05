@@ -1,10 +1,3 @@
-"""Creates the tables and some sample users. Run from the backend folder:
-
-    .venv/Scripts/python -m scripts.seed_users
-
-Running it again skips users that already exist.
-"""
-
 from sqlalchemy import select
 
 from app.db.base import Base
@@ -23,7 +16,7 @@ USERS = [
 
 
 def main() -> None:
-    Base.metadata.create_all(engine)  # creates any missing tables
+    Base.metadata.create_all(engine)
 
     added = 0
     with SessionLocal() as db:

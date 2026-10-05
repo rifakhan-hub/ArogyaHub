@@ -26,14 +26,13 @@ function dateRange(range: string) {
   return {};
 }
 
-/** The append-only record of every sensitive action, with filters and CSV export. */
 export default function AuditPage() {
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("");
   const [entity, setEntity] = useState("");
   const [range, setRange] = useState("");
   const [page, setPage] = useState(1);
-  const [openId, setOpenId] = useState<string | null>(null); // the row showing its details
+  const [openId, setOpenId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const filters: AuditListParams = {
@@ -227,7 +226,6 @@ export default function AuditPage() {
   );
 }
 
-/** The full record of one entry, shown under its row. */
 function AuditDetails({ log }: { log: AuditLog }) {
   const rows = [
     ["Entity", `${log.entity_type} ${log.entity_id}`],

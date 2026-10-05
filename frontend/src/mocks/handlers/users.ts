@@ -1,4 +1,3 @@
-// Mock user accounts: list, details and block / unblock.
 import { http, HttpResponse } from "msw";
 import type { BlockUserRequest, UserDetail } from "@/api/types";
 import { db, writeAudit } from "../db";
