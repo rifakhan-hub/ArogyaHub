@@ -1,37 +1,36 @@
-import { AlertCircle, Eye, EyeOff, FlaskConical, Lock, ShieldCheck } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Lock, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
+import type { Role } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
-import { env } from "@/lib/env";
 import { isEmail } from "@/lib/validators";
 import { RibbonMotif } from "./RibbonMotif";
-
-const DEMO = { email: "admin@aarogyahub.in", password: "Admin@123" };
 
 export default function LoginPage() {
   const { user, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const next = searchParams.get("next")?.startsWith("/admin") ? searchParams.get("next")! : "/admin";
+  const startPage = (role: Role) => (role === "admin" ? next : "/");
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  if (user?.role === "admin" && !submitting) return <Navigate to={next} replace />;
+  if (user && !submitting) return <Navigate to={startPage(user.role)} replace />;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const newErrors = {
-      email: isEmail(email) ? undefined : "Enter an email address, like name@aarogyahub.in",
+      email: isEmail(email) ? undefined : "Enter an email address, like name@example.com",
       password: password ? undefined : "Enter your password",
     };
     setErrors(newErrors);
@@ -41,7 +40,7 @@ export default function LoginPage() {
     setServerError("");
     try {
       const signedIn = await signIn(email, password);
-      navigate(signedIn.role === "admin" ? next : "/403", { replace: true });
+      navigate(startPage(signedIn.role), { replace: true });
     } catch (err) {
       setServerError((err as Error).message);
       setSubmitting(false);
@@ -51,26 +50,30 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-dvh bg-bg lg:grid-cols-[5fr_7fr]">
       <section className="hidden flex-col justify-between bg-stone-800 p-10 text-stone-50 lg:flex xl:p-14">
-        <Logo />
+        <Link to="/" aria-label="AarogyaHub home">
+          <Logo subtitle="Online doctor consultations" />
+        </Link>
         <div className="flex max-w-lg flex-col gap-10">
           <div>
-            <h1 className="text-h1 text-stone-50">Every doctor licence-checked. Every action on record.</h1>
+            <h1 className="text-h1 text-stone-50">See a verified doctor today, without leaving home.</h1>
             <p className="mt-4 text-body-lg text-stone-300">
-              Verify doctors, keep consultations on track and curate what the assistant tells patients.
+              Book consultations, keep your reports in one place, and pick up where you left off.
             </p>
           </div>
           <RibbonMotif />
         </div>
         <p className="flex items-center gap-2 text-small text-stone-400">
           <ShieldCheck className="size-4" strokeWidth={1.75} aria-hidden />
-          Access is logged. Sign out on shared computers.
+          Your data stays private. Sign out on shared computers.
         </p>
       </section>
 
       <main className="flex flex-col px-4 py-6 sm:px-10">
         <div className="flex items-center justify-between">
           <span className="lg:invisible">
-            <Logo onDark={false} />
+            <Link to="/" aria-label="AarogyaHub home">
+              <Logo onDark={false} subtitle="Online doctor consultations" />
+            </Link>
           </span>
           <ThemeToggle />
         </div>
@@ -79,30 +82,8 @@ export default function LoginPage() {
           <span className="mb-6 flex size-12 items-center justify-center rounded-lg bg-primary-soft text-primary">
             <Lock className="size-6" strokeWidth={1.75} aria-hidden />
           </span>
-          <h2 className="text-h2 max-sm:text-h3">Log in to the admin console</h2>
-          <p className="mt-2 text-body text-muted">For the AarogyaHub operations team.</p>
-
-          {env.USE_MOCKS && (
-            <div className="mt-6 flex items-start gap-3 rounded-md border border-haldi-200 bg-accent-soft p-3 text-small text-warning dark:border-haldi-800">
-              <FlaskConical className="mt-0.5 size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-              <div className="flex flex-col gap-1.5">
-                <p>
-                  Demo backend is on. Use {DEMO.email} / {DEMO.password}.
-                </p>
-                <button
-                  type="button"
-                  className="self-start font-semibold underline underline-offset-2 hover:no-underline"
-                  onClick={() => {
-                    setEmail(DEMO.email);
-                    setPassword(DEMO.password);
-                    setErrors({});
-                  }}
-                >
-                  Fill demo login
-                </button>
-              </div>
-            </div>
-          )}
+          <h2 className="text-h2 max-sm:text-h3">Log in to AarogyaHub</h2>
+          <p className="mt-2 text-body text-muted">For patients, doctors and the AarogyaHub team.</p>
 
           <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5">
             {serverError && (
@@ -138,6 +119,13 @@ export default function LoginPage() {
               {submitting ? "Logging in…" : "Log in"}
             </Button>
           </form>
+
+          <p className="mt-6 text-center text-small text-muted">
+            New to AarogyaHub?{" "}
+            <Link to="/register" className="font-semibold text-primary hover:underline">
+              Create an account
+            </Link>
+          </p>
         </div>
       </main>
     </div>

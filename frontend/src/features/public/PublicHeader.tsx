@@ -1,7 +1,8 @@
 import { Link } from "react-router";
-import { buttonClass } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
 
 const LINKS = [
   { href: "#doctors", label: "Find a doctor" },
@@ -10,7 +11,13 @@ const LINKS = [
   { href: "#for-doctors", label: "For doctors" },
 ];
 
+function firstName(name: string) {
+  return name.replace(/^Dr\.?\s+/i, "").split(" ")[0];
+}
+
 export function PublicHeader() {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-8">
@@ -32,12 +39,28 @@ export function PublicHeader() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link to="/login" className={buttonClass("ghost", "sm")}>
-            Log in
-          </Link>
-          <Link to="/register" className={buttonClass("outline", "sm")}>
-            Sign up
-          </Link>
+          {user ? (
+            <>
+              <span className="px-2 text-small font-medium text-muted">Hi, {firstName(user.name)}</span>
+              {user.role === "admin" && (
+                <Link to="/admin" className={buttonClass("ghost", "sm")}>
+                  Admin console
+                </Link>
+              )}
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                Log out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className={buttonClass("ghost", "sm")}>
+                Log in
+              </Link>
+              <Link to="/register" className={buttonClass("outline", "sm")}>
+                Sign up
+              </Link>
+            </>
+          )}
           <a href="#doctors" className={buttonClass("primary", "sm")}>
             Book a consultation
           </a>

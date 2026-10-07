@@ -1,6 +1,33 @@
 # AarogyaHub backend
 
-FastAPI + MySQL. For now it has the users part only: the admin users routes the admin panel calls.
+FastAPI + MySQL. It has sign-up, login and the admin users routes.
+
+## Routes
+
+All routes start with `/api/v1`.
+
+| Route | Who | What it does |
+|---|---|---|
+| `POST /auth/register` | anyone | Creates a patient or doctor account |
+| `POST /auth/login` | anyone | Returns an access token and sets a refresh cookie |
+| `POST /auth/refresh` | anyone with the cookie | Returns a new access token |
+| `POST /auth/logout` | anyone | Clears the refresh cookie |
+| `GET /users/me` | signed in | The signed-in user's account |
+| `GET /admin/users` | admin | Search, filter, sort and page through users |
+| `GET /admin/users/{id}` | admin | One user |
+| `PATCH /admin/users/{id}/block` | admin | Block or unblock a user |
+| `GET /health` | anyone | Is the API up and can it reach MySQL |
+
+## How login works
+
+1. **Register:** the password is hashed with argon2 and saved in `users.password_hash`. The plain password is never stored.
+2. **Log in:** the backend checks the password and sends back two tokens:
+   - an **access token** (lasts 15 minutes). The frontend keeps it in memory and sends it as `Authorization: Bearer <token>`.
+   - a **refresh token** (lasts 7 days) in an HttpOnly cookie, which page scripts can't read.
+3. **Page reload:** the frontend calls `/auth/refresh`. The browser sends the cookie, and the backend returns a new access token.
+4. **Protected routes:** `get_current_user` reads the access token. `require_admin` allows admins only.
+5. **Log out:** the cookie is cleared.
+6. **Blocked users** can't log in or refresh.
 
 ## Files
 
@@ -10,7 +37,8 @@ backend/
     main.py                  app, CORS, error format, routes
     core/
       config.py              settings from .env
-      deps.py                get_db
+      security.py            password hashing, tokens
+      deps.py                get_db, get_current_user, require_admin
       errors.py              AppError -> { "error": { "code", "message" } }
     db/
       base.py                SQLAlchemy base class
@@ -18,23 +46,26 @@ backend/
     models/
       user.py                users table
     schemas/
+      auth.py                register, login, token shapes
+      user.py                user shapes
       common.py              Page (paged lists)
-      user.py                user shapes sent and received
     api/
       v1/
         router.py            collects every route file
+        auth.py              register, login, refresh, logout
+        me.py                GET /users/me
         admin/
-          users.py           GET /admin/users, GET /admin/users/{id}, PATCH /admin/users/{id}/block
+          users.py           admin users routes
   scripts/
     seed_users.py            creates the tables and sample users
+    create_admin.py          creates your admin account, or resets its password
   tests/
     conftest.py
+    integration/test_auth.py
     integration/test_users.py
   pyproject.toml
   .env.example
 ```
-
-There's no login yet, so the admin routes are open. Add an admin check to them when auth is built.
 
 ## Setup
 
@@ -46,15 +77,24 @@ Run these from the `backend` folder.
    CREATE DATABASE aarogyahub CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
    ```
 
-2. Copy `.env.example` to `.env` and put your MySQL details in `DATABASE_URL`.
+2. Copy `.env.example` to `.env` and fill in:
+   - `DATABASE_URL`: your MySQL details
+   - `JWT_SECRET`: a long random string. Make one with:
 
-3. Install, then create the tables and sample users:
+     ```bash
+     python -c "import secrets; print(secrets.token_urlsafe(48))"
+     ```
+
+3. Install, then create the tables, the sample users and your admin:
 
    ```bash
    python -m venv .venv
    .venv/Scripts/python -m pip install -e ".[dev]"
    .venv/Scripts/python -m scripts.seed_users
+   .venv/Scripts/python -m scripts.create_admin
    ```
+
+   `create_admin` asks for an email and a password. The sample users have no password, so they can't log in. Register new accounts on the frontend's `/register` page.
 
 ## Run
 
@@ -63,6 +103,8 @@ Run these from the `backend` folder.
 ```
 
 API docs: http://localhost:8000/docs
+
+Restart the server after you change `.env`.
 
 ## Tests
 
@@ -75,11 +117,13 @@ API docs: http://localhost:8000/docs
 The collection is in `postman/` at the repo root.
 
 1. In Postman: **Import** → pick both files in `postman/`.
-2. Choose the **AarogyaHub local** environment (top right).
-3. With the server running and the sample users loaded, open the **AarogyaHub API** collection → **Run**.
+2. Choose the **AarogyaHub local** environment, and set `adminEmail` and `adminPassword` to the admin you created.
+3. With the server running, open the **AarogyaHub API** collection → **Run**.
+
+The login requests save the access token, and every other request sends it automatically.
 
 Or from the repo root, without opening Postman:
 
 ```bash
-npx newman run postman/AarogyaHub.postman_collection.json -e postman/AarogyaHub-local.postman_environment.json
+npx newman run postman/AarogyaHub.postman_collection.json -e postman/AarogyaHub-local.postman_environment.json --env-var adminPassword=YOUR_ADMIN_PASSWORD
 ```

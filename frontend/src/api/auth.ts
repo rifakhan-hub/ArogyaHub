@@ -1,5 +1,10 @@
 import { api, setAccessToken } from "./client";
-import type { TokenResponse } from "./types";
+import type { RegisterRequest, TokenResponse, User } from "./types";
+
+export async function register(input: RegisterRequest) {
+  const res = await api.post<User>("/auth/register", input);
+  return res.data;
+}
 
 export async function login(email: string, password: string) {
   const res = await api.post<TokenResponse>("/auth/login", { email, password });

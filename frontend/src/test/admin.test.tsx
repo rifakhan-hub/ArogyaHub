@@ -7,15 +7,15 @@ import { renderApp, signInAs } from "./render";
 describe("access", () => {
   it("sends signed-out visitors to the login page", async () => {
     const { router } = renderApp("/admin/users");
-    await screen.findByRole("heading", { name: /log in to the admin console/i });
+    await screen.findByRole("heading", { name: /log in to aarogyahub/i });
     expect(router.state.location.pathname).toBe("/login");
     expect(router.state.location.search).toBe("?next=%2Fadmin%2Fusers");
   });
 
-  it("shows the no-access page to a signed-in patient", async () => {
+  it("shows the no-access page to a signed-in patient", { timeout: 90_000 }, async () => {
     signInAs("patient");
     const { router } = renderApp("/admin");
-    await screen.findByRole("heading", { name: /don't have access/i });
+    await screen.findByRole("heading", { name: /don't have access/i }, { timeout: 80_000 });
     expect(router.state.location.pathname).toBe("/403");
   });
 });

@@ -1,7 +1,6 @@
 from datetime import UTC, datetime
-from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.user import Role
 
@@ -49,20 +48,3 @@ class UserDetail(UserOut):
 class BlockUserRequest(BaseModel):
     blocked: bool
     reason: str | None = Field(default=None, max_length=500)
-
-
-class RegisterRequest(BaseModel):
-    name: str = Field(min_length=2, max_length=150)
-    email: EmailStr
-    phone: str | None = Field(default=None, pattern=r"^\+?[0-9]{10,15}$")
-    city: str | None = Field(default=None, max_length=100)
-    role: Literal["patient", "doctor"]
-    password: str = Field(min_length=8, max_length=128)
-
-    @field_validator("name", "city", "phone", mode="before")
-    @classmethod
-    def strip_blank(cls, value):
-        if isinstance(value, str):
-            value = value.strip()
-            return value or None
-        return value

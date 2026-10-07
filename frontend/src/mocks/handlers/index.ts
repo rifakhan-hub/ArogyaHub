@@ -6,12 +6,12 @@ import { doctorsHandlers } from "./doctors";
 import { knowledgeBaseHandlers } from "./knowledge-base";
 import { usersHandlers } from "./users";
 
-export const handlers = [
-  ...authHandlers,
+export const fakeOnlyHandlers = [
   ...analyticsHandlers,
   ...doctorsHandlers,
-  ...usersHandlers,
   ...appointmentsHandlers,
   ...knowledgeBaseHandlers,
   ...auditLogHandlers,
 ];
+
+export const handlers = [...authHandlers, ...usersHandlers, ...fakeOnlyHandlers];

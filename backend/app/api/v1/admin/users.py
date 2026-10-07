@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db
+from app.core.deps import get_db, require_admin
 from app.core.errors import AppError
 from app.models.user import Role, User
 from app.schemas.common import Page
 from app.schemas.user import BlockUserRequest, UserDetail, UserOut
 
-router = APIRouter(prefix="/admin/users", tags=["admin: users"])
+router = APIRouter(prefix="/admin/users", tags=["admin: users"], dependencies=[Depends(require_admin)])
 
 SORT_COLUMNS = {
     "name": func.lower(func.replace(User.name, "Dr. ", "")),

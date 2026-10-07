@@ -35,9 +35,30 @@ export const mockSession = {
 
 export const accessTokenFor = (userId: string) => `mock-access.${userId}.${Date.now()}`;
 export const userFromToken = (token: string | null): User | undefined => {
-  const id = token?.startsWith("mock-access.") ? token.split(".")[1] : undefined;
-  return id ? db.users.find((u) => u.id === id) : undefined;
+  if (!token) return undefined;
+  if (!token.startsWith("mock-access.")) return userFromBackendToken(token);
+  const id = token.split(".")[1];
+  return db.users.find((u) => u.id === id);
 };
+
+function userFromBackendToken(token: string): User | undefined {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return {
+      id: String(payload.sub),
+      name: "Admin",
+      email: "",
+      phone: null,
+      role: payload.role,
+      is_active: true,
+      is_email_verified: true,
+      created_at: new Date().toISOString(),
+      last_login_at: null,
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 export function writeAudit(
   actor: User | null,

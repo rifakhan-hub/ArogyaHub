@@ -1,9 +1,9 @@
 import { AlertCircle, CheckCircle2, Eye, EyeOff, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
+import { register } from "@/api/auth";
 import { ApiError } from "@/api/client";
 import type { RegisterRequest, User } from "@/api/types";
-import { registerUser } from "@/api/users";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
@@ -66,7 +66,7 @@ export default function RegisterPage() {
 
     setSubmitting(true);
     try {
-      const user = await registerUser({
+      const user = await register({
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim() || null,
@@ -108,9 +108,14 @@ export default function RegisterPage() {
               <p className="text-body text-muted">
                 Welcome to AarogyaHub, {created.name}. Your {created.role} account for {created.email} is ready.
               </p>
-              <Link to="/" className={buttonClass("primary", "md")}>
-                Back to home
-              </Link>
+              <div className="flex gap-3">
+                <Link to={`/login?email=${encodeURIComponent(created.email)}`} className={buttonClass("primary", "md")}>
+                  Log in
+                </Link>
+                <Link to="/" className={buttonClass("outline", "md")}>
+                  Back to home
+                </Link>
+              </div>
             </div>
           ) : (
             <>
@@ -223,6 +228,13 @@ export default function RegisterPage() {
                   {submitting ? "Creating account…" : "Create account"}
                 </Button>
               </form>
+
+              <p className="mt-6 text-center text-small text-muted">
+                Already have an account?{" "}
+                <Link to="/login" className="font-semibold text-primary hover:underline">
+                  Log in
+                </Link>
+              </p>
             </>
           )}
         </Card>

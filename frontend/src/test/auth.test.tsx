@@ -6,7 +6,7 @@ import type { RegisterRequest } from "@/api/types";
 import { renderApp } from "./render";
 import { server } from "./server";
 
-const URL = "*/api/v1/users";
+const URL = "*/api/v1/auth/register";
 
 async function fillForm(user: ReturnType<typeof userEvent.setup>) {
   await user.type(await screen.findByLabelText("Full name"), "Aman Gill");
@@ -100,5 +100,51 @@ describe("register", () => {
   it("is linked from the home page header", async () => {
     renderApp("/");
     expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/register");
+  });
+});
+
+describe("login", () => {
+  const patient = {
+    id: "9",
+    name: "Aman Gill",
+    email: "aman@example.com",
+    phone: null,
+    city: null,
+    role: "patient",
+    is_active: true,
+    is_email_verified: false,
+    blocked_reason: null,
+    created_at: new Date().toISOString(),
+    last_login_at: null,
+  };
+
+  it("sends a patient to the home page and shows their name", async () => {
+    server.use(
+      http.post("*/api/v1/auth/login", () =>
+        HttpResponse.json({ access_token: "patient-token", token_type: "bearer", user: patient }),
+      ),
+    );
+    const user = userEvent.setup();
+    const { router } = renderApp("/login");
+
+    await user.type(await screen.findByLabelText("Email"), "aman@example.com");
+    await user.type(screen.getByLabelText("Password"), "a-strong-password");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByText("Hi, Aman")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/");
+
+    await user.click(screen.getByRole("button", { name: "Log out" }));
+    expect(await screen.findByRole("link", { name: "Sign up" })).toBeInTheDocument();
+  });
+
+  it("fills in the email after registering", async () => {
+    renderApp("/login?email=aman%40example.com");
+    expect(await screen.findByLabelText("Email")).toHaveValue("aman@example.com");
+  });
+
+  it("links to the register page", async () => {
+    renderApp("/login");
+    expect(await screen.findByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
   });
 });
