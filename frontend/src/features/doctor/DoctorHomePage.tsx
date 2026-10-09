@@ -6,12 +6,12 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Stat } from "@/features/portal/Stat";
+import { STATUS_BORDER } from "@/features/portal/status";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/cn";
 import { formatRelativeDay, formatTime, todayIST } from "@/lib/dates";
 import { firstName } from "@/lib/format";
-import { dateKey } from "./calendar";
-import { STATUS_BORDER } from "./data";
+import { dateKey } from "@/lib/calendar";
 import { useDoctorData } from "./DoctorLayout";
 
 export default function DoctorHomePage() {

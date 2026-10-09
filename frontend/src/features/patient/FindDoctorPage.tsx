@@ -1,4 +1,4 @@
-import { SearchX } from "lucide-react";
+import { BadgeCheck, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -73,11 +73,14 @@ export default function FindDoctorPage() {
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((d) => (
             <li key={d.name}>
-              <Card className="flex h-full flex-col gap-4 p-5">
+              <Card className="lift flex h-full flex-col gap-4 p-5">
                 <div className="flex items-center gap-3">
-                  <Avatar name={d.name} />
+                  <Avatar name={d.name} size="lg" />
                   <div>
-                    <p className="font-semibold">{d.name}</p>
+                    <p className="flex items-center gap-1.5 font-semibold">
+                      {d.name}
+                      <BadgeCheck className="size-4 text-primary" aria-label="Licence verified" />
+                    </p>
                     <p className="text-small text-muted">{d.speciality}</p>
                   </div>
                 </div>

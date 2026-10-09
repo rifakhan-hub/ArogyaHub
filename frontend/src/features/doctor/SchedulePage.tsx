@@ -9,7 +9,7 @@ import { Input, Select } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatTime, todayIST, toMinutes } from "@/lib/dates";
 import { plural } from "@/lib/format";
-import { dateKey, formatLongDate, weekdayIndex } from "./calendar";
+import { dateKey, formatLongDate, weekdayIndex } from "@/lib/calendar";
 import { type AvailabilityBlock, DAYS, SLOT_LENGTHS } from "./data";
 import { useDoctorData } from "./DoctorLayout";
 import { MonthCalendar } from "./MonthCalendar";

@@ -43,6 +43,47 @@ describe("patient portal", () => {
     expect(screen.getAllByText("Cancelled").length).toBeGreaterThan(0);
   });
 
+  it("uploads, shares, filters and deletes reports", async () => {
+    signInAs("patient");
+    const user = userEvent.setup({ applyAccept: false });
+    renderApp("/patient/reports");
+
+    await screen.findByRole("heading", { name: "Reports" });
+    const upload = screen.getByLabelText("Upload report");
+
+    await user.upload(upload, new File(["%PDF"], "Lipid profile.pdf", { type: "application/pdf" }));
+    expect(screen.getByText("Lipid profile.pdf")).toBeInTheDocument();
+
+    await user.upload(upload, new File(["hello"], "notes.txt", { type: "text/plain" }));
+    expect(screen.queryByText("notes.txt")).not.toBeInTheDocument();
+
+    const row = screen.getByText("Lipid profile.pdf").closest("li")!;
+    expect(within(row).getByText("Private")).toBeInTheDocument();
+    await user.click(within(row).getByRole("button", { name: "Share" }));
+    expect(within(row).getByText("Shared with doctors")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Scans" }));
+    expect(screen.queryByText("Lipid profile.pdf")).not.toBeInTheDocument();
+    expect(screen.getByText("Chest X-ray.dcm")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "All" }));
+    await user.click(screen.getByRole("button", { name: "Delete Lipid profile.pdf" }));
+    expect(screen.queryByText("Lipid profile.pdf")).not.toBeInTheDocument();
+  });
+
+  it("shows the portal links in the sidebar", async () => {
+    signInAs("patient");
+    renderApp("/patient");
+    const nav = await screen.findByRole("navigation", { name: "Patient portal" });
+    expect(within(nav).getAllByRole("link").map((l) => l.textContent)).toEqual([
+      "Home",
+      "Appointments",
+      "Reports",
+      "Find a doctor",
+      "Profile",
+    ]);
+  });
+
   it("keeps patients out of the doctor portal", async () => {
     signInAs("patient");
     const { router } = renderApp("/doctor");

@@ -9,7 +9,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { cn } from "@/lib/cn";
 import { formatDateTime } from "@/lib/dates";
-import { type DoctorAppointment, STATUS_BORDER } from "./data";
+import { STATUS_BORDER } from "@/features/portal/status";
+import type { DoctorAppointment } from "./data";
 import { useDoctorData } from "./DoctorLayout";
 
 export default function DoctorAppointmentsPage() {

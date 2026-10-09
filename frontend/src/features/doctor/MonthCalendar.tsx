@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
-import { formatLongDate, formatMonth, monthGrid, shiftMonth } from "./calendar";
+import { formatLongDate, formatMonth, monthGrid, shiftMonth } from "@/lib/calendar";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

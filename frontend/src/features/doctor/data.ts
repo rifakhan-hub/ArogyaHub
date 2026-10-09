@@ -35,11 +35,3 @@ export const SAMPLE_BLOCKS: AvailabilityBlock[] = [
   { id: "b2", day: 2, start: "16:00", end: "19:00", slotMinutes: 20 },
   { id: "b3", day: 4, start: "09:00", end: "13:00", slotMinutes: 15 },
 ];
-
-export const STATUS_BORDER: Record<AppointmentStatus, string> = {
-  scheduled: "border-l-primary",
-  in_progress: "border-l-primary",
-  completed: "border-l-success",
-  cancelled: "border-l-danger",
-  no_show: "border-l-warning",
-};
