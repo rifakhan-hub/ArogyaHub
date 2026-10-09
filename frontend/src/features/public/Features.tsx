@@ -1,5 +1,6 @@
 import { Bot, FileImage, Pill, ShieldCheck } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { Reveal } from "@/components/ui/Reveal";
 
 const FEATURES = [
   {
@@ -26,25 +27,29 @@ const FEATURES = [
 
 export function Features() {
   return (
-    <section id="features" className="scroll-mt-16 border-t border-border py-20">
+    <section id="features" className="border-border scroll-mt-16 border-t py-20">
       <div className="mx-auto max-w-6xl px-8">
-        <h2 className="text-h1 text-text">Care you can check</h2>
-        <p className="mt-2 text-body-lg text-muted">
-          Verified doctors, your records in one place, and an assistant that is always on.
-        </p>
+        <Reveal>
+          <h2 className="text-h1 text-text">Care you can check</h2>
+          <p className="text-body-lg text-muted mt-2">
+            Verified doctors, your records in one place, and an assistant that is always on.
+          </p>
+        </Reveal>
 
         <ul className="mt-8 grid grid-cols-2 gap-5">
-          {FEATURES.map((feature) => (
+          {FEATURES.map((feature, i) => (
             <li key={feature.title}>
-              <Card className="flex h-full gap-4 p-6">
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <feature.icon className="size-6" aria-hidden />
-                </span>
-                <div>
-                  <h3 className="text-h4 text-text">{feature.title}</h3>
-                  <p className="mt-2 text-body text-muted">{feature.body}</p>
-                </div>
-              </Card>
+              <Reveal delay={(i % 2) * 120} className="h-full">
+                <Card className="lift flex h-full gap-4 p-6">
+                  <span className="bg-primary-soft text-primary flex size-12 shrink-0 items-center justify-center rounded-lg">
+                    <feature.icon className="size-6" aria-hidden />
+                  </span>
+                  <div>
+                    <h3 className="text-h4 text-text">{feature.title}</h3>
+                    <p className="text-body text-muted mt-2">{feature.body}</p>
+                  </div>
+                </Card>
+              </Reveal>
             </li>
           ))}
         </ul>

@@ -3,6 +3,8 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { firstName } from "@/lib/format";
+import { HOME_PATH, PORTAL_LABEL } from "@/lib/roles";
 
 const LINKS = [
   { href: "#doctors", label: "Find a doctor" },
@@ -10,10 +12,6 @@ const LINKS = [
   { href: "#features", label: "Why AarogyaHub" },
   { href: "#for-doctors", label: "For doctors" },
 ];
-
-function firstName(name: string) {
-  return name.replace(/^Dr\.?\s+/i, "").split(" ")[0];
-}
 
 export function PublicHeader() {
   const { user, signOut } = useAuth();
@@ -42,11 +40,9 @@ export function PublicHeader() {
           {user ? (
             <>
               <span className="px-2 text-small font-medium text-muted">Hi, {firstName(user.name)}</span>
-              {user.role === "admin" && (
-                <Link to="/admin" className={buttonClass("ghost", "sm")}>
-                  Admin console
-                </Link>
-              )}
+              <Link to={HOME_PATH[user.role]} className={buttonClass("ghost", "sm")}>
+                {PORTAL_LABEL[user.role]}
+              </Link>
               <Button variant="ghost" size="sm" onClick={signOut}>
                 Log out
               </Button>

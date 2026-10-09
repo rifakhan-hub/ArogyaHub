@@ -118,7 +118,7 @@ describe("login", () => {
     last_login_at: null,
   };
 
-  it("sends a patient to the home page and shows their name", async () => {
+  it("sends a patient to the patient portal, and logs out to the home page", async () => {
     server.use(
       http.post("*/api/v1/auth/login", () =>
         HttpResponse.json({ access_token: "patient-token", token_type: "bearer", user: patient }),
@@ -131,11 +131,12 @@ describe("login", () => {
     await user.type(screen.getByLabelText("Password"), "a-strong-password");
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
-    expect(await screen.findByText("Hi, Aman")).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe("/");
+    expect(await screen.findByRole("heading", { name: "Welcome, Aman" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/patient");
 
-    await user.click(screen.getByRole("button", { name: "Log out" }));
+    await user.click(screen.getByRole("link", { name: "Log out" }));
     expect(await screen.findByRole("link", { name: "Sign up" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/");
   });
 
   it("fills in the email after registering", async () => {

@@ -1,6 +1,6 @@
 {
   "info": {
-    "_postman_id": "7a985c13-f304-4326-b493-408f1622b875",
+    "_postman_id": "2a0e9760-e3ca-4ebe-a675-142a659b1518",
     "name": "AarogyaHub API",
     "description": "Auth and users API for AarogyaHub.\n\n1. Start the backend from the backend folder: `.venv/Scripts/python -m uvicorn app.main:app --reload --port 8000`\n2. Load the sample users once: `.venv/Scripts/python -m scripts.seed_users`\n3. Create your admin once: `.venv/Scripts/python -m scripts.create_admin`\n4. In the 'AarogyaHub local' environment, set adminEmail and adminPassword to that admin.\n5. Run the collection in order.\n\nRequests send the saved access token automatically (collection Authorization: Bearer {{accessToken}}).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
@@ -52,7 +52,7 @@
     },
     {
       "name": "01 Auth",
-      "description": "Register, log in, refresh. Each run registers a new patient with a fresh email.",
+      "description": "Register, log in, refresh. Each run registers a new patient and a new doctor with fresh emails.",
       "item": [
         {
           "name": "Register a new patient",
@@ -515,6 +515,166 @@
                 "exec": [
                   "pm.test(\"status 401\", () => pm.response.to.have.status(401));",
                   "pm.test(\"UNAUTHENTICATED\", () => pm.expect(pm.response.json().error.code).to.eql(\"UNAUTHENTICATED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register a new doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. Postman Doctor\",\n  \"email\": \"{{doctorEmail}}\",\n  \"phone\": null,\n  \"city\": \"Ludhiana\",\n  \"role\": \"doctor\",\n  \"password\": \"postman-pass-123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"doctorEmail\", `postman.doctor.${Date.now()}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"is a doctor\", () => pm.expect(pm.response.json().role).to.eql(\"doctor\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as the new doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{doctorEmail}}\",\n  \"password\": \"postman-pass-123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test(\"role is doctor, so the app opens the doctor portal\", () => pm.expect(body.user.role).to.eql(\"doctor\"));",
+                  "pm.collectionVariables.set(\"accessToken\", body.access_token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Doctor's account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"is the new doctor\", () => pm.expect(pm.response.json().email).to.eql(pm.collectionVariables.get(\"doctorEmail\")));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Doctor cannot open admin routes -> 403",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status 403\", () => pm.response.to.have.status(403));"
                 ]
               }
             }
@@ -1404,6 +1564,11 @@
       "key": "newUserId",
       "value": "",
       "description": "Set by 'Register a new patient'"
+    },
+    {
+      "key": "doctorEmail",
+      "value": "",
+      "description": "Set before 'Register a new doctor'"
     },
     {
       "key": "patientId",

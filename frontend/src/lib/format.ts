@@ -19,3 +19,7 @@ export function percentChange(current: number, previous: number): number | null 
 export function plural(count: number, word: string) {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
+
+export function firstName(name: string) {
+  return name.replace(/^Dr\.?\s+/i, "").split(" ")[0];
+}

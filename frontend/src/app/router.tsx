@@ -1,7 +1,10 @@
 import type { RouteObject } from "react-router";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/features/admin/AdminLayout";
+import { LogoutPage } from "@/features/auth/LogoutPage";
+import { DoctorLayout } from "@/features/doctor/DoctorLayout";
 import { Forbidden, NotFound, RouteError } from "@/features/errors/ErrorPages";
+import { PatientLayout } from "@/features/patient/PatientLayout";
 import { RequireRole } from "./RequireRole";
 
 const page = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({
@@ -16,6 +19,7 @@ export const routes: RouteObject[] = [
       { path: "/", lazy: page(() => import("@/features/public/HomePage")) },
       { path: "/login", lazy: page(() => import("@/features/auth/LoginPage")) },
       { path: "/register", lazy: page(() => import("@/features/auth/RegisterPage")) },
+      { path: "/logout", element: <LogoutPage /> },
       {
         path: "/admin",
         element: (
@@ -32,6 +36,36 @@ export const routes: RouteObject[] = [
           { path: "kb/new", lazy: page(() => import("@/features/admin/kb/KbEditorPage")) },
           { path: "kb/:articleId", lazy: page(() => import("@/features/admin/kb/KbEditorPage")) },
           { path: "audit", lazy: page(() => import("@/features/admin/audit/AuditPage")) },
+          { path: "*", element: <NotFound /> },
+        ],
+      },
+      {
+        path: "/patient",
+        element: (
+          <RequireRole allow="patient">
+            <PatientLayout />
+          </RequireRole>
+        ),
+        children: [
+          { index: true, lazy: page(() => import("@/features/patient/PatientHomePage")) },
+          { path: "doctors", lazy: page(() => import("@/features/patient/FindDoctorPage")) },
+          { path: "appointments", lazy: page(() => import("@/features/patient/PatientAppointmentsPage")) },
+          { path: "profile", lazy: page(() => import("@/features/portal/ProfilePage")) },
+          { path: "*", element: <NotFound /> },
+        ],
+      },
+      {
+        path: "/doctor",
+        element: (
+          <RequireRole allow="doctor">
+            <DoctorLayout />
+          </RequireRole>
+        ),
+        children: [
+          { index: true, lazy: page(() => import("@/features/doctor/DoctorHomePage")) },
+          { path: "appointments", lazy: page(() => import("@/features/doctor/DoctorAppointmentsPage")) },
+          { path: "availability", lazy: page(() => import("@/features/doctor/AvailabilityPage")) },
+          { path: "profile", lazy: page(() => import("@/features/portal/ProfilePage")) },
           { path: "*", element: <NotFound /> },
         ],
       },

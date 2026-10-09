@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { HOME_PATH } from "@/lib/roles";
 import { isEmail } from "@/lib/validators";
 import { RibbonMotif } from "./RibbonMotif";
 
@@ -15,8 +16,10 @@ export default function LoginPage() {
   const { user, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const next = searchParams.get("next")?.startsWith("/admin") ? searchParams.get("next")! : "/admin";
-  const startPage = (role: Role) => (role === "admin" ? next : "/");
+  const startPage = (role: Role) => {
+    const next = searchParams.get("next");
+    return next?.startsWith(HOME_PATH[role]) ? next : HOME_PATH[role];
+  };
 
   const [email, setEmail] = useState(searchParams.get("email") ?? "");
   const [password, setPassword] = useState("");
