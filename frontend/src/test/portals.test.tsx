@@ -71,21 +71,48 @@ describe("doctor portal", () => {
     expect(within(upcoming).queryAllByRole("button", { name: "Mark done" })).toHaveLength(before - 1);
   });
 
-  it("adds weekly hours and rejects overlapping ones", async () => {
+  it("picks a day on the calendar and adds weekly hours for it", async () => {
     signInAs("doctor");
     const user = userEvent.setup();
-    renderApp("/doctor/availability");
+    renderApp("/doctor/schedule");
 
-    await screen.findByRole("heading", { name: "Weekly hours" });
-    await user.selectOptions(screen.getByLabelText("Day"), "Saturday");
+    await screen.findByRole("heading", { name: "Schedule" });
+    const sunday = screen.getAllByRole("button", { name: /^Sunday/ })[0];
+    await user.click(sunday);
+    expect(sunday).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("You don't work on Sundays yet.")).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: "Add hours" }));
-    expect(await screen.findByText(/Saturday 09:00–12:00/)).toBeInTheDocument();
-    expect(screen.getByText("Saturday", { selector: "p" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Remove Sunday 09:00–12:00" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Add hours" }));
-    expect(await screen.findByText(/overlap hours you already have on Saturday/)).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("overlap hours you already have on Sundays");
 
-    await user.click(screen.getByRole("button", { name: "Remove Saturday 09:00–12:00" }));
-    expect(screen.queryByText("Saturday", { selector: "p" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Remove Sunday 09:00–12:00" }));
+    expect(screen.getByText("You don't work on Sundays yet.")).toBeInTheDocument();
+  });
+
+  it("marks a day off on the calendar", async () => {
+    signInAs("doctor");
+    const user = userEvent.setup();
+    renderApp("/doctor/schedule");
+
+    await screen.findByRole("heading", { name: "Schedule" });
+    await user.click(screen.getByRole("button", { name: "Take this day off" }));
+    expect(screen.getByRole("button", { name: "Undo day off" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { pressed: true })).toHaveAccessibleName(/day off$/);
+  });
+
+  it("moves between months", async () => {
+    signInAs("doctor");
+    const user = userEvent.setup();
+    renderApp("/doctor/schedule");
+
+    const title = await screen.findByRole("heading", { level: 2, name: /^[A-Z][a-z]+ \d{4}$/ });
+    const thisMonth = title.textContent;
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+    expect(title.textContent).not.toBe(thisMonth);
+    await user.click(screen.getByRole("button", { name: "Today" }));
+    expect(title.textContent).toBe(thisMonth);
   });
 });

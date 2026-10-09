@@ -64,7 +64,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, lazy: page(() => import("@/features/doctor/DoctorHomePage")) },
           { path: "appointments", lazy: page(() => import("@/features/doctor/DoctorAppointmentsPage")) },
-          { path: "availability", lazy: page(() => import("@/features/doctor/AvailabilityPage")) },
+          { path: "schedule", lazy: page(() => import("@/features/doctor/SchedulePage")) },
           { path: "profile", lazy: page(() => import("@/features/portal/ProfilePage")) },
           { path: "*", element: <NotFound /> },
         ],
