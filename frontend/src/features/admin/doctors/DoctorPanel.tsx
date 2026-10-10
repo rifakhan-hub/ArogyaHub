@@ -2,19 +2,22 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { verifyDoctor } from "@/api/admin";
 import type { ApiError } from "@/api/client";
-import type { Doctor } from "@/api/types";
+import { openFile } from "@/api/files";
+import type { Doctor, DoctorDocument } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { VerificationBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Textarea } from "@/components/ui/Input";
 import { DetailList, PanelBody, PanelFooter, PanelHeader, SidePanel } from "@/components/ui/Modal";
-import { refreshData } from "@/hooks/useApi";
+import { DOCUMENT_LABELS } from "@/features/doctor/DocumentsSection";
+import { refreshData, useApi } from "@/hooks/useApi";
 import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
 import { checkReason } from "@/lib/validators";
 
 export function DoctorPanel({ doctor, onClose }: { doctor: Doctor | null; onClose: () => void }) {
+  const documents = useApi<DoctorDocument[]>(doctor ? `/admin/doctors/${doctor.id}/documents` : null).data;
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
   const [error, setError] = useState("");
@@ -84,6 +87,33 @@ export function DoctorPanel({ doctor, onClose }: { doctor: Doctor | null; onClos
                   ["Submitted", formatDate(doctor.submitted_at)],
                 ]}
               />
+            </section>
+            <section className="flex flex-col gap-2">
+              <h3 className="text-small font-semibold text-subtle">Documents</h3>
+              {documents && documents.length > 0 ? (
+                <ul className="flex flex-col gap-2">
+                  {documents.map((d) => (
+                    <li
+                      key={d.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-small font-semibold">{DOCUMENT_LABELS[d.doc_type]}</span>
+                        <span className="block truncate text-caption text-muted">{d.file_name}</span>
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openFile(`/admin/doctors/${doctor.id}/documents/${d.id}/file`)}
+                      >
+                        Open
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-small text-muted">No documents uploaded yet.</p>
+              )}
             </section>
             {doctor.bio && (
               <section className="flex flex-col gap-2">

@@ -1,11 +1,12 @@
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
 from app.core.security import read_token
 from app.db.session import SessionLocal
-from app.models.user import Role, User
+from app.models import Doctor, Role, User, VerificationStatus
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -40,3 +41,16 @@ def require_role(role: Role):
 require_admin = require_role(Role.ADMIN)
 require_doctor = require_role(Role.DOCTOR)
 require_patient = require_role(Role.PATIENT)
+
+
+def current_doctor(user: User = Depends(require_doctor), db: Session = Depends(get_db)) -> Doctor:
+    doctor = db.scalar(select(Doctor).where(Doctor.user_id == user.id))
+    if not doctor:
+        raise AppError(404, "NO_DOCTOR_PROFILE", "Finish your doctor profile so an admin can review it.")
+    return doctor
+
+
+def verified_doctor(doctor: Doctor = Depends(current_doctor)) -> Doctor:
+    if doctor.verification_status != VerificationStatus.VERIFIED:
+        raise AppError(403, "DOCTOR_NOT_VERIFIED", "An admin has to approve your profile first.")
+    return doctor

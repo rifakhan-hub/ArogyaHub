@@ -14,5 +14,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_DAYS: int = 7
     COOKIE_SECURE: bool = False
 
+    UPLOAD_DIR: Path = Path(__file__).parents[2] / "uploads"
+    MAX_UPLOAD_MB: int = 20
+
 
 settings = Settings()

@@ -93,10 +93,6 @@ export function formatShortDate(date: string | Date) {
   return `${p.day} ${p.month}`;
 }
 
-export function istDateTime(daysFromNow: number, time: string) {
-  return `${daysFromToday(daysFromNow)}T${time}:00+05:30`;
-}
-
 export function toMinutes(time: string) {
   const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;

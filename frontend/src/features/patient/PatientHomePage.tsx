@@ -1,23 +1,31 @@
 import { CalendarCheck, CalendarPlus, ClipboardCheck, FileText, Upload } from "lucide-react";
 import { Link } from "react-router";
+import type { Appointment, Report } from "@/api/types";
 import { buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Spinner } from "@/components/ui/Spinner";
+import { byStart, isUpcoming } from "@/features/portal/appointments";
 import { Stat } from "@/features/portal/Stat";
+import { useApi } from "@/hooks/useApi";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDate, formatRelativeDay, formatTime } from "@/lib/dates";
 import { firstName, formatINR } from "@/lib/format";
-import { byStart, isUpcoming } from "./data";
-import { usePatientData } from "./PatientLayout";
 
 export default function PatientHomePage() {
   const { user } = useAuth();
-  const { appointments, reports } = usePatientData();
+  const appointments = useApi<Appointment[]>("/appointments/me");
+  const reports = useApi<Report[]>("/reports/me");
 
-  const upcoming = appointments.filter(isUpcoming).sort(byStart);
-  const completed = appointments.filter((a) => a.status === "completed");
+  const error = appointments.error ?? reports.error;
+  if (error) return <ErrorMessage error={error} onRetry={appointments.reload} />;
+  if (!appointments.data || !reports.data) return <Spinner />;
+
+  const upcoming = appointments.data.filter((a) => isUpcoming(a)).sort(byStart);
+  const completed = appointments.data.filter((a) => a.status === "completed");
   const next = upcoming[0];
-  const recentReports = [...reports].sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt)).slice(0, 3);
+  const recentReports = reports.data.slice(0, 3);
 
   return (
     <>
@@ -36,21 +44,21 @@ export default function PatientHomePage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Stat icon={CalendarCheck} label="Upcoming consultations" value={upcoming.length} />
         <Stat icon={ClipboardCheck} label="Completed consultations" value={completed.length} />
-        <Stat icon={FileText} label="Reports" value={reports.length} />
+        <Stat icon={FileText} label="Reports" value={reports.data.length} />
       </div>
 
       {next ? (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg bg-primary p-6 text-on-primary shadow-2">
           <div>
             <h2 className="text-small opacity-80">Next consultation</h2>
-            <p className="mt-1 text-h3 font-semibold">{next.doctor}</p>
+            <p className="mt-1 text-h3 font-semibold">{next.doctor_name}</p>
             <p className="mt-1 text-small opacity-90">
-              {next.speciality} · {formatINR(next.fee)}
+              {next.specialization} · {formatINR(next.fee)}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-h3 font-semibold tabular-nums">{formatTime(next.start)}</p>
-            <p className="text-small opacity-80">{formatRelativeDay(next.start)}</p>
+            <p className="text-h3 font-semibold tabular-nums">{formatTime(next.start_time)}</p>
+            <p className="text-small opacity-80">{formatRelativeDay(next.start_time)}</p>
           </div>
         </div>
       ) : (
@@ -86,9 +94,9 @@ export default function PatientHomePage() {
               <li key={r.id} className="flex items-center justify-between gap-4 py-3">
                 <span className="flex min-w-0 items-center gap-3">
                   <FileText className="size-4 shrink-0 text-primary" aria-hidden />
-                  <span className="truncate text-small font-medium">{r.name}</span>
+                  <span className="truncate text-small font-medium">{r.title}</span>
                 </span>
-                <span className="text-small text-muted">{formatDate(r.uploadedAt)}</span>
+                <span className="text-small text-muted">{formatDate(r.uploaded_at)}</span>
               </li>
             ))}
           </ul>

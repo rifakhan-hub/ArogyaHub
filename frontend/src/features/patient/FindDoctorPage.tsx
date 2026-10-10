@@ -2,52 +2,36 @@ import { BadgeCheck, SearchX } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { bookAppointment } from "@/api/appointments";
+import type { ApiError } from "@/api/client";
+import type { DoctorCard, Paginated, Slot } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { SearchBox, Select } from "@/components/ui/Input";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { Field } from "@/components/ui/Field";
+import { SearchBox, Select, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { DOCTORS, SPECIALITIES, type SampleDoctor } from "@/features/public/content";
+import { Spinner } from "@/components/ui/Spinner";
+import { SPECIALITIES } from "@/features/doctor/profileForm";
+import { refreshData, useApi } from "@/hooks/useApi";
+import { useDebounced } from "@/hooks/useDebounced";
 import { cn } from "@/lib/cn";
-import { formatRelativeDay, istDateTime } from "@/lib/dates";
+import { daysFromToday, formatDay, formatTime } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
-import { SLOT_TIMES } from "./data";
-import { usePatientData } from "./PatientLayout";
 
 const SPECIALITY_OPTIONS = [{ value: "", label: "All specialities" }, ...SPECIALITIES.map((s) => ({ value: s, label: s }))];
 
+const NEXT_DAYS = Array.from({ length: 7 }, (_, i) => daysFromToday(i));
+
 export default function FindDoctorPage() {
-  const { appointments, book } = usePatientData();
-  const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [speciality, setSpeciality] = useState("");
-  const [doctor, setDoctor] = useState<SampleDoctor | null>(null);
-  const [time, setTime] = useState("");
-
-  const q = query.trim().toLowerCase();
-  const doctors = DOCTORS.filter(
-    (d) =>
-      (!speciality || d.speciality === speciality) &&
-      (!q || d.name.toLowerCase().includes(q) || d.speciality.toLowerCase().includes(q)),
-  );
-
-  const takenTimes = (d: SampleDoctor) =>
-    appointments.filter((a) => a.doctor === d.name && a.status === "scheduled").map((a) => a.start);
-
-  function openBooking(d: SampleDoctor) {
-    setDoctor(d);
-    setTime("");
-  }
-
-  function confirmBooking() {
-    if (!doctor || !time) return;
-    book({ doctor: doctor.name, speciality: doctor.speciality, start: istDateTime(1, time), fee: doctor.fee });
-    toast.success(`Booked ${doctor.name} for tomorrow at ${time}`);
-    setDoctor(null);
-    navigate("/patient/appointments");
-  }
+  const [specialization, setSpecialization] = useState("");
+  const [doctor, setDoctor] = useState<DoctorCard | null>(null);
+  const q = useDebounced(query, 300);
+  const { data, error, reload } = useApi<Paginated<DoctorCard>>("/doctors", { q, specialization, page_size: 50 });
 
   return (
     <>
@@ -58,21 +42,25 @@ export default function FindDoctorPage() {
         <SearchBox value={query} onChange={setQuery} placeholder="Search by name or speciality" />
         <Select
           aria-label="Speciality"
-          value={speciality}
-          onChange={setSpeciality}
+          value={specialization}
+          onChange={setSpecialization}
           options={SPECIALITY_OPTIONS}
           className="w-56"
         />
       </div>
 
-      {doctors.length === 0 ? (
+      {error ? (
+        <ErrorMessage error={error} onRetry={reload} />
+      ) : !data ? (
+        <Spinner />
+      ) : data.items.length === 0 ? (
         <Card>
           <EmptyState icon={SearchX} title="No doctors match" body="Try another name or speciality." />
         </Card>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {doctors.map((d) => (
-            <li key={d.name}>
+          {data.items.map((d) => (
+            <li key={d.id}>
               <Card className="lift flex h-full flex-col gap-4 p-5">
                 <div className="flex items-center gap-3">
                   <Avatar name={d.name} size="lg" />
@@ -81,15 +69,15 @@ export default function FindDoctorPage() {
                       {d.name}
                       <BadgeCheck className="size-4 text-primary" aria-label="Licence verified" />
                     </p>
-                    <p className="text-small text-muted">{d.speciality}</p>
+                    <p className="text-small text-muted">{d.specialization}</p>
                   </div>
                 </div>
                 <p className="text-small text-muted">
-                  {d.experience} years · {d.council} registered · {d.slotMinutes} min consultation
+                  {d.qualifications} · {d.experience_years} years{d.city ? ` · ${d.city}` : ""}
                 </p>
                 <div className="mt-auto flex items-center justify-between">
-                  <span className="font-semibold">{formatINR(d.fee)}</span>
-                  <Button size="sm" onClick={() => openBooking(d)} aria-label={`Book ${d.name}`}>
+                  <span className="font-semibold">{formatINR(d.consultation_fee)}</span>
+                  <Button size="sm" onClick={() => setDoctor(d)} aria-label={`Book ${d.name}`}>
                     Book
                   </Button>
                 </div>
@@ -99,51 +87,120 @@ export default function FindDoctorPage() {
         </ul>
       )}
 
-      <Modal open={doctor !== null} onClose={() => setDoctor(null)} label={`Book ${doctor?.name ?? ""}`}>
-        {doctor && (
-          <div className="flex flex-col gap-5">
-            <div>
-              <h2 className="text-h4 font-semibold">Book {doctor.name}</h2>
-              <p className="text-small text-muted">
-                {doctor.speciality} · {formatINR(doctor.fee)} · {formatRelativeDay(istDateTime(1, "10:00"))}
-              </p>
-            </div>
-            <fieldset>
-              <legend className="mb-2 text-small font-semibold">Choose a time</legend>
-              <div className="grid grid-cols-3 gap-2">
-                {SLOT_TIMES.map((t) => {
-                  const taken = takenTimes(doctor).includes(istDateTime(1, t));
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      disabled={taken}
-                      aria-pressed={time === t}
-                      onClick={() => setTime(t)}
-                      className={cn(
-                        "h-10 rounded-md border text-small font-medium disabled:cursor-not-allowed disabled:opacity-40",
-                        time === t
-                          ? "border-primary bg-primary text-on-primary"
-                          : "border-border-strong bg-surface hover:bg-surface-muted",
-                      )}
-                    >
-                      {t}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDoctor(null)}>
-                Cancel
-              </Button>
-              <Button onClick={confirmBooking} disabled={!time}>
-                Confirm booking
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      <BookingModal doctor={doctor} onClose={() => setDoctor(null)} />
     </>
+  );
+}
+
+function BookingModal({ doctor, onClose }: { doctor: DoctorCard | null; onClose: () => void }) {
+  const navigate = useNavigate();
+  const [day, setDay] = useState(NEXT_DAYS[0]);
+  const [slot, setSlot] = useState<Slot | null>(null);
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const slots = useApi<Slot[]>(doctor ? `/doctors/${doctor.id}/slots` : null, { date: day });
+
+  function close() {
+    setDay(NEXT_DAYS[0]);
+    setSlot(null);
+    setReason("");
+    onClose();
+  }
+
+  async function confirm() {
+    if (!doctor || !slot) return;
+    setSaving(true);
+    try {
+      await bookAppointment(doctor.id, slot.start, reason.trim() || null);
+      toast.success(`Booked ${doctor.name} at ${formatTime(slot.start)}`);
+      refreshData();
+      close();
+      navigate("/patient/appointments");
+    } catch (err) {
+      toast.error((err as ApiError).message);
+      setSlot(null);
+      slots.reload();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal open={doctor !== null} onClose={close} label={`Book ${doctor?.name ?? ""}`}>
+      {doctor && (
+        <div className="flex flex-col gap-5">
+          <div>
+            <h2 className="text-h4 font-semibold">Book {doctor.name}</h2>
+            <p className="text-small text-muted">
+              {doctor.specialization} · {formatINR(doctor.consultation_fee)}
+            </p>
+          </div>
+
+          <fieldset>
+            <legend className="mb-2 text-small font-semibold">Choose a day</legend>
+            <div className="flex flex-wrap gap-2">
+              {NEXT_DAYS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={day === d}
+                  onClick={() => {
+                    setDay(d);
+                    setSlot(null);
+                  }}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-small font-medium",
+                    day === d ? "border-primary bg-primary text-on-primary" : "border-border-strong hover:bg-surface-muted",
+                  )}
+                >
+                  {formatDay(d)}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="mb-2 text-small font-semibold">Choose a time</legend>
+            {!slots.data ? (
+              <Spinner />
+            ) : slots.data.length === 0 ? (
+              <p className="text-small text-muted">No free times on this day. Try another day.</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {slots.data.map((s) => (
+                  <button
+                    key={s.start}
+                    type="button"
+                    aria-pressed={slot?.start === s.start}
+                    onClick={() => setSlot(s)}
+                    className={cn(
+                      "h-10 rounded-md border text-small font-medium",
+                      slot?.start === s.start
+                        ? "border-primary bg-primary text-on-primary"
+                        : "border-border-strong bg-surface hover:bg-surface-muted",
+                    )}
+                  >
+                    {formatTime(s.start)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </fieldset>
+
+          <Field label="Reason for the visit" id="reason" optional>
+            <Textarea rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
+          </Field>
+
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={close}>
+              Cancel
+            </Button>
+            <Button onClick={confirm} disabled={!slot} loading={saving}>
+              Confirm booking
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }

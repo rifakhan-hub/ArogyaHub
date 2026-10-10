@@ -5,6 +5,7 @@ import { DetailList } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
+import { DocumentsSection } from "./DocumentsSection";
 import { useDoctorData } from "./DoctorLayout";
 
 export default function DoctorProfilePage() {
@@ -38,6 +39,7 @@ export default function DoctorProfilePage() {
         />
         {profile.bio && <p className="text-body text-muted">{profile.bio}</p>}
       </Card>
+      <DocumentsSection canDelete={false} />
     </>
   );
 }

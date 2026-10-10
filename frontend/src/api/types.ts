@@ -86,3 +86,92 @@ export interface Patient extends User {
   blood_group: BloodGroup | null;
   allergies: string | null;
 }
+
+export interface DoctorCard {
+  id: string;
+  name: string;
+  city: string | null;
+  specialization: string;
+  qualifications: string;
+  experience_years: number;
+  consultation_fee: number;
+  bio: string | null;
+}
+
+export interface Slot {
+  start: string;
+  end: string;
+}
+
+export interface AvailabilityBlock {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  slot_minutes: number;
+}
+
+export interface Appointment {
+  id: string;
+  doctor_id: string;
+  doctor_name: string;
+  specialization: string;
+  patient_id: string;
+  patient_name: string;
+  start_time: string;
+  end_time: string;
+  status: AppointmentStatus;
+  reason: string | null;
+  fee: number;
+  cancel_reason: string | null;
+  created_at: string;
+}
+
+export interface ConsultationReportInput {
+  symptoms: string | null;
+  diagnosis: string;
+  prescription: string | null;
+  advice: string | null;
+  follow_up_date: string | null;
+}
+
+export interface ConsultationReport extends ConsultationReportInput {
+  id: string;
+  consultation_id: string;
+  updated_at: string;
+}
+
+export type ReportType = "pdf" | "image" | "dicom";
+
+export interface Report {
+  id: string;
+  title: string;
+  report_type: ReportType;
+  file_name: string;
+  content_type: string;
+  size: number;
+  uploaded_at: string;
+  shared_with: { doctor_id: string; doctor_name: string; shared_at: string }[];
+}
+
+export interface SharedReport {
+  id: string;
+  title: string;
+  report_type: ReportType;
+  file_name: string;
+  size: number;
+  patient_id: string;
+  patient_name: string;
+  shared_at: string;
+}
+
+export type DocumentType = "licence" | "degree" | "id_proof";
+
+export interface DoctorDocument {
+  id: string;
+  doc_type: DocumentType;
+  file_name: string;
+  content_type: string;
+  size: number;
+  uploaded_at: string;
+}

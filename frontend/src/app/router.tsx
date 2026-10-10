@@ -66,6 +66,7 @@ export const routes: RouteObject[] = [
           { index: true, lazy: page(() => import("@/features/doctor/DoctorHomePage")) },
           { path: "appointments", lazy: page(() => import("@/features/doctor/DoctorAppointmentsPage")) },
           { path: "schedule", lazy: page(() => import("@/features/doctor/SchedulePage")) },
+          { path: "reports", lazy: page(() => import("@/features/doctor/SharedReportsPage")) },
           { path: "profile", lazy: page(() => import("@/features/doctor/DoctorProfilePage")) },
           { path: "*", element: <NotFound /> },
         ],

@@ -1,14 +1,18 @@
+from datetime import datetime, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.core.deps import get_db
 from app.core.security import hash_password
 from app.db.base import Base
 from app.main import app
 from app.models import Admin, Doctor, Role, User, VerificationStatus
+from app.services.slots import IST
 
 PASSWORD = "test-password-123"
 PASSWORD_HASH = hash_password(PASSWORD)
@@ -24,6 +28,12 @@ def doctor_profile(licence: str, status: VerificationStatus) -> dict:
         "qualifications": "MBBS, MD",
         "verification_status": status,
     }
+
+
+@pytest.fixture(autouse=True)
+def uploads(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "UPLOAD_DIR", tmp_path / "uploads")
+    return tmp_path / "uploads"
 
 
 @pytest.fixture
@@ -86,9 +96,37 @@ def doctor(session):
 
 
 @pytest.fixture
+def verified(session):
+    return logged_in("kapoor@test.in")
+
+
+@pytest.fixture
 def patient(session):
     return logged_in("priya@test.in")
 
 
 def login(client, email, password=PASSWORD):
     return client.post("/api/v1/auth/login", json={"email": email, "password": password})
+
+
+def tomorrow_ist():
+    return (datetime.now(IST) + timedelta(days=1)).date()
+
+
+def open_morning_hours(doctor_client, day):
+    body = {"day_of_week": day.weekday(), "start_time": "09:00", "end_time": "12:00", "slot_minutes": 30}
+    return doctor_client.post("/api/v1/doctors/me/availability", json=body)
+
+
+def kapoor_id(client):
+    return client.get("/api/v1/doctors", params={"q": "kapoor"}).json()["items"][0]["id"]
+
+
+def book_first_slot(patient_client, doctor_client):
+    day = tomorrow_ist()
+    open_morning_hours(doctor_client, day)
+    doctor_id = kapoor_id(patient_client)
+    slot = patient_client.get(f"/api/v1/doctors/{doctor_id}/slots", params={"date": day.isoformat()}).json()[0]
+    return patient_client.post(
+        "/api/v1/appointments", json={"doctor_id": doctor_id, "start_time": slot["start"], "reason": "Skin rash"}
+    )

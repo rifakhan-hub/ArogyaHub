@@ -12,6 +12,7 @@ import { DetailList } from "@/components/ui/Modal";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { formatDate } from "@/lib/dates";
 import { formatINR } from "@/lib/format";
+import { DocumentsSection } from "./DocumentsSection";
 import {
   AboutFields,
   EMPTY_PROFILE,
@@ -104,6 +105,7 @@ export function DoctorStatusScreen({ doctor, onUpdated }: { doctor: Doctor | nul
                 </div>
               </Card>
             )}
+            <DocumentsSection canDelete />
           </>
         )}
       </main>

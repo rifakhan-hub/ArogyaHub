@@ -1,4 +1,4 @@
-import { Info, LogOut, type LucideIcon } from "lucide-react";
+import { LogOut, type LucideIcon } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router";
 import { Avatar } from "@/components/ui/Avatar";
 import { buttonClass } from "@/components/ui/Button";
@@ -77,10 +77,6 @@ export function SidebarLayout({ title, links, context }: SidebarLayoutProps) {
       <div className="flex min-w-0 flex-col">
         <header className="flex h-16 items-center justify-between gap-4 border-b border-border bg-surface px-8">
           <p className="text-small font-medium text-muted">{formatLongDate(todayIST())}</p>
-          <p className="flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-caption text-warning">
-            <Info className="size-3.5" aria-hidden />
-            Sample data, kept until you reload
-          </p>
         </header>
         <main className="flex flex-col gap-8 px-8 py-8">
           <Outlet context={context} />

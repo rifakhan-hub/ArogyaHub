@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import get_db, require_admin
 from app.core.errors import AppError
+from app.core.storage import send_file
 from app.db.pagination import paginate
-from app.models import Doctor, User, VerificationStatus
+from app.models import Doctor, DoctorDocument, User, VerificationStatus
 from app.models.user import utcnow
 from app.schemas.common import Page
 from app.schemas.doctor import DoctorOut, VerifyRequest
+from app.schemas.document import DocumentOut
 
 router = APIRouter(prefix="/admin/doctors", tags=["admin: doctors"], dependencies=[Depends(require_admin)])
 
@@ -68,6 +70,23 @@ def verify_doctor(
     doctor.reviewed_by = admin.id
     db.commit()
     return DoctorOut.from_doctor(doctor)
+
+
+@router.get("/{doctor_id}/documents", response_model=list[DocumentOut])
+def list_documents(doctor_id: int, db: Session = Depends(get_db)):
+    doctor = find_doctor(db, doctor_id)
+    documents = db.scalars(
+        select(DoctorDocument).where(DoctorDocument.doctor_id == doctor.id).order_by(DoctorDocument.uploaded_at)
+    ).all()
+    return [DocumentOut.build(d) for d in documents]
+
+
+@router.get("/{doctor_id}/documents/{document_id}/file")
+def open_document(doctor_id: int, document_id: int, db: Session = Depends(get_db)):
+    document = db.get(DoctorDocument, document_id)
+    if not document or document.doctor_id != doctor_id:
+        raise AppError(404, "NOT_FOUND", "We could not find that document.")
+    return send_file(document.storage_path, document.file_name, document.content_type)
 
 
 def find_doctor(db: Session, doctor_id: int) -> Doctor:
