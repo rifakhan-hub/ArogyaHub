@@ -1,8 +1,13 @@
 import { api, setAccessToken } from "./client";
-import type { RegisterRequest, TokenResponse, User } from "./types";
+import type { AccountInput, Doctor, DoctorRegisterInput, TokenResponse, User } from "./types";
 
-export async function register(input: RegisterRequest) {
+export async function register(input: AccountInput) {
   const res = await api.post<User>("/auth/register", input);
+  return res.data;
+}
+
+export async function registerDoctor(input: DoctorRegisterInput) {
+  const res = await api.post<Doctor>("/auth/register/doctor", input);
   return res.data;
 }
 

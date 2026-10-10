@@ -1,8 +1,9 @@
-from datetime import UTC, datetime
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.user import Role
+from app.schemas.common import as_utc
 
 
 class UserOut(BaseModel):
@@ -27,22 +28,8 @@ class UserOut(BaseModel):
 
     @field_validator("created_at", "last_login_at")
     @classmethod
-    def as_utc(cls, value: datetime | None):
-        return value.replace(tzinfo=UTC) if value and value.tzinfo is None else value
-
-
-class UserStats(BaseModel):
-    appointments: int = 0
-    completed: int = 0
-    cancelled: int = 0
-    no_show: int = 0
-    last_appointment_at: datetime | None = None
-
-
-class UserDetail(UserOut):
-    doctor_id: str | None = None
-    verification_status: str | None = None
-    stats: UserStats = UserStats()
+    def utc(cls, value):
+        return as_utc(value)
 
 
 class BlockUserRequest(BaseModel):

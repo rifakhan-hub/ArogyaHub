@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
-import type { RegisterRequest } from "@/api/types";
+import type { AccountInput } from "@/api/types";
 import { renderApp } from "./render";
 import { server } from "./server";
 
@@ -19,10 +19,10 @@ async function fillForm(user: ReturnType<typeof userEvent.setup>) {
 
 describe("register", () => {
   it("creates an account and shows a welcome message", async () => {
-    let sent: RegisterRequest | undefined;
+    let sent: AccountInput | undefined;
     server.use(
       http.post(URL, async ({ request }) => {
-        sent = (await request.json()) as RegisterRequest;
+        sent = (await request.json()) as AccountInput;
         return HttpResponse.json(
           {
             id: "8",
@@ -42,7 +42,6 @@ describe("register", () => {
     renderApp("/register");
 
     await fillForm(user);
-    await user.click(screen.getByRole("radio", { name: /doctor/i }));
     await user.click(screen.getByRole("button", { name: "Create account" }));
 
     expect(await screen.findByRole("heading", { name: "Account created" })).toBeInTheDocument();
@@ -52,7 +51,6 @@ describe("register", () => {
       email: "aman@example.com",
       phone: "+919811112222",
       city: "Patiala",
-      role: "doctor",
       password: "a-strong-password",
     });
   });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { formatDay, formatTime, timeAgo, todayIST } from "./dates";
 import { formatBytes, formatINR, percentChange } from "./format";
-import { checkReason, isEmail, slugify, validateArticle } from "./validators";
+import { checkReason, isEmail, isPhone } from "./validators";
 
 describe("money and numbers", () => {
   it("formats rupees with Indian digit grouping", () => {
@@ -42,41 +42,11 @@ describe("dates (stored in UTC, shown in IST)", () => {
 });
 
 describe("validators", () => {
-  const article = {
-    title: "Joining a video consultation",
-    slug: "join-video-call",
-    category: "howto" as const,
-    audience: ["patient" as const],
-    body_md: "Open Appointments, then tap Join call. The button turns on 10 minutes before.",
-    reviewer: null,
-  };
-
-  it("accepts a valid how-to article without a reviewer", () => {
-    expect(validateArticle(article)).toEqual({});
-  });
-
-  it("requires a named medical reviewer for health articles", () => {
-    expect(validateArticle({ ...article, category: "health" }).reviewer).toBeDefined();
-    expect(validateArticle({ ...article, category: "health", reviewer: "Dr. Simran Kaur, MD" })).toEqual({});
-  });
-
-  it("rejects slugs that aren't lowercase words joined by hyphens", () => {
-    expect(validateArticle({ ...article, slug: "Join Video" }).slug).toBeDefined();
-    expect(validateArticle({ ...article, slug: "join--video" }).slug).toBeDefined();
-  });
-
-  it("needs at least one audience", () => {
-    expect(validateArticle({ ...article, audience: [] }).audience).toBeDefined();
-  });
-
-  it("turns a title into a slug", () => {
-    expect(slugify("Heat stroke: warning signs in summer")).toBe("heat-stroke-warning-signs-in-summer");
-    expect(slugify("  What is a DICOM file?  ")).toBe("what-is-a-dicom-file");
-  });
-
-  it("checks emails and reasons", () => {
+  it("checks emails, phone numbers and reasons", () => {
     expect(isEmail("admin@aarogyahub.in")).toBe(true);
     expect(isEmail("admin")).toBe(false);
+    expect(isPhone("+919812345678")).toBe(true);
+    expect(isPhone("12ab")).toBe(false);
     expect(checkReason("too short")).toBeDefined();
     expect(checkReason("A clear reason for the change")).toBeUndefined();
   });

@@ -1,11 +1,16 @@
 import { CalendarDays, ClipboardList, LayoutDashboard, UserRound } from "lucide-react";
 import { useState } from "react";
 import { useOutletContext } from "react-router";
-import type { AppointmentStatus } from "@/api/types";
+import type { AppointmentStatus, Doctor } from "@/api/types";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { Spinner } from "@/components/ui/Spinner";
 import { SidebarLayout } from "@/features/portal/SidebarLayout";
+import { useApi } from "@/hooks/useApi";
 import { type AvailabilityBlock, type DoctorAppointment, SAMPLE_APPOINTMENTS, SAMPLE_BLOCKS } from "./data";
+import { DoctorStatusScreen } from "./DoctorStatusScreen";
 
 export interface DoctorData {
+  profile: Doctor;
   appointments: DoctorAppointment[];
   blocks: AvailabilityBlock[];
   daysOff: string[];
@@ -27,11 +32,24 @@ const LINKS = [
 ];
 
 export function DoctorLayout() {
+  const { data: profile, error, reload } = useApi<Doctor>("/doctors/me");
   const [appointments, setAppointments] = useState(SAMPLE_APPOINTMENTS);
   const [blocks, setBlocks] = useState(SAMPLE_BLOCKS);
   const [daysOff, setDaysOff] = useState<string[]>([]);
 
+  if (error?.code === "NO_DOCTOR_PROFILE") return <DoctorStatusScreen doctor={null} onUpdated={reload} />;
+  if (error) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-bg">
+        <ErrorMessage error={error} onRetry={reload} />
+      </div>
+    );
+  }
+  if (!profile) return <Spinner fullScreen />;
+  if (profile.verification_status !== "verified") return <DoctorStatusScreen doctor={profile} onUpdated={reload} />;
+
   const data: DoctorData = {
+    profile,
     appointments,
     blocks,
     daysOff,

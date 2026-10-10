@@ -5,24 +5,13 @@ import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { Providers } from "@/app/providers";
 import { routes } from "@/app/router";
-import { env } from "@/lib/env";
-
-async function startMockBackend() {
-  if (!env.USE_MOCKS) return;
-  const { worker } = await import("@/mocks/browser");
-  await worker.start({ onUnhandledRequest: "bypass", quiet: true });
-}
 
 const router = createBrowserRouter(routes);
 
-startMockBackend()
-  .catch((err) => console.warn("Fake backend didn't start. Reload the page to try again.", err))
-  .then(() => {
-  createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-      <Providers>
-        <RouterProvider router={router} />
-      </Providers>
-    </StrictMode>,
-  );
-});
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <Providers>
+      <RouterProvider router={router} />
+    </Providers>
+  </StrictMode>,
+);

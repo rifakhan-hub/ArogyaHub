@@ -19,8 +19,6 @@ export default defineConfig({
       output: {
         manualChunks: {
           react: ["react", "react-dom", "react-dom/client", "react-router"],
-          charts: ["recharts"],
-          markdown: ["react-markdown", "rehype-sanitize"],
         },
       },
     },

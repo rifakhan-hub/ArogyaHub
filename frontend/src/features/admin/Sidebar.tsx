@@ -1,22 +1,21 @@
-import { BookOpenText, CalendarClock, FlaskConical, LayoutDashboard, ScrollText, ShieldCheck, UsersRound } from "lucide-react";
+import { BookOpenText, CalendarClock, LayoutDashboard, ScrollText, Stethoscope, UsersRound } from "lucide-react";
 import { NavLink } from "react-router";
-import type { DoctorList } from "@/api/types";
+import type { Doctor, Paginated } from "@/api/types";
 import { Logo } from "@/components/ui/Logo";
 import { useApi } from "@/hooks/useApi";
 import { cn } from "@/lib/cn";
-import { env } from "@/lib/env";
 
 const NAV_ITEMS = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard },
-  { to: "/admin/verifications", label: "Verifications", icon: ShieldCheck },
-  { to: "/admin/users", label: "Users", icon: UsersRound },
+  { to: "/admin/doctors", label: "Doctors", icon: Stethoscope },
+  { to: "/admin/patients", label: "Patients", icon: UsersRound },
   { to: "/admin/appointments", label: "Appointments", icon: CalendarClock },
   { to: "/admin/kb", label: "Knowledge base", icon: BookOpenText },
   { to: "/admin/audit", label: "Audit log", icon: ScrollText },
 ];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const pending = useApi<DoctorList>("/admin/doctors", { status: "pending", page_size: 1 }).data?.counts.pending ?? 0;
+  const pending = useApi<Paginated<Doctor>>("/admin/doctors", { status: "pending", page_size: 1 }).data?.total ?? 0;
 
   return (
     <div className="flex h-full flex-col bg-nav">
@@ -41,7 +40,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <Icon className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
                 <span className="truncate">{label}</span>
-                {label === "Verifications" && pending > 0 && (
+                {label === "Doctors" && pending > 0 && (
                   <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-haldi-400 px-1.5 text-caption font-semibold text-stone-900 tabular">
                     {pending}
                     <span className="sr-only"> pending</span>
@@ -53,12 +52,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </ul>
       </nav>
 
-      {env.USE_MOCKS && (
-        <p className="m-3 flex items-start gap-2 rounded-md bg-nav-hover px-3 py-2 text-caption text-nav-muted">
-          <FlaskConical className="mt-px size-4 shrink-0 text-haldi-300" strokeWidth={1.75} aria-hidden />
-          Demo data. Changes reset when you reload.
-        </p>
-      )}
     </div>
   );
 }

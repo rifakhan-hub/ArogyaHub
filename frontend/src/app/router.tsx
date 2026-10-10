@@ -1,6 +1,7 @@
 import type { RouteObject } from "react-router";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/features/admin/AdminLayout";
+import { EmptyPage } from "@/features/admin/EmptyPage";
 import { LogoutPage } from "@/features/auth/LogoutPage";
 import { DoctorLayout } from "@/features/doctor/DoctorLayout";
 import { Forbidden, NotFound, RouteError } from "@/features/errors/ErrorPages";
@@ -19,6 +20,7 @@ export const routes: RouteObject[] = [
       { path: "/", lazy: page(() => import("@/features/public/HomePage")) },
       { path: "/login", lazy: page(() => import("@/features/auth/LoginPage")) },
       { path: "/register", lazy: page(() => import("@/features/auth/RegisterPage")) },
+      { path: "/register/doctor", lazy: page(() => import("@/features/auth/DoctorRegisterPage")) },
       { path: "/logout", element: <LogoutPage /> },
       {
         path: "/admin",
@@ -28,14 +30,12 @@ export const routes: RouteObject[] = [
           </RequireRole>
         ),
         children: [
-          { index: true, lazy: page(() => import("@/features/admin/overview/OverviewPage")) },
-          { path: "verifications", lazy: page(() => import("@/features/admin/verifications/VerificationsPage")) },
-          { path: "users", lazy: page(() => import("@/features/admin/users/UsersPage")) },
-          { path: "appointments", lazy: page(() => import("@/features/admin/appointments/AppointmentsPage")) },
-          { path: "kb", lazy: page(() => import("@/features/admin/kb/KbListPage")) },
-          { path: "kb/new", lazy: page(() => import("@/features/admin/kb/KbEditorPage")) },
-          { path: "kb/:articleId", lazy: page(() => import("@/features/admin/kb/KbEditorPage")) },
-          { path: "audit", lazy: page(() => import("@/features/admin/audit/AuditPage")) },
+          { index: true, element: <EmptyPage title="Overview" /> },
+          { path: "doctors", lazy: page(() => import("@/features/admin/doctors/DoctorsPage")) },
+          { path: "patients", lazy: page(() => import("@/features/admin/patients/PatientsPage")) },
+          { path: "appointments", element: <EmptyPage title="Appointments" /> },
+          { path: "kb", element: <EmptyPage title="Knowledge base" /> },
+          { path: "audit", element: <EmptyPage title="Audit log" /> },
           { path: "*", element: <NotFound /> },
         ],
       },
@@ -51,7 +51,7 @@ export const routes: RouteObject[] = [
           { path: "doctors", lazy: page(() => import("@/features/patient/FindDoctorPage")) },
           { path: "appointments", lazy: page(() => import("@/features/patient/PatientAppointmentsPage")) },
           { path: "reports", lazy: page(() => import("@/features/patient/ReportsPage")) },
-          { path: "profile", lazy: page(() => import("@/features/portal/ProfilePage")) },
+          { path: "profile", lazy: page(() => import("@/features/patient/PatientProfilePage")) },
           { path: "*", element: <NotFound /> },
         ],
       },
@@ -66,7 +66,7 @@ export const routes: RouteObject[] = [
           { index: true, lazy: page(() => import("@/features/doctor/DoctorHomePage")) },
           { path: "appointments", lazy: page(() => import("@/features/doctor/DoctorAppointmentsPage")) },
           { path: "schedule", lazy: page(() => import("@/features/doctor/SchedulePage")) },
-          { path: "profile", lazy: page(() => import("@/features/portal/ProfilePage")) },
+          { path: "profile", lazy: page(() => import("@/features/doctor/DoctorProfilePage")) },
           { path: "*", element: <NotFound /> },
         ],
       },

@@ -3,36 +3,27 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { register } from "@/api/auth";
 import { ApiError } from "@/api/client";
-import type { RegisterRequest, User } from "@/api/types";
+import type { User } from "@/api/types";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { cn } from "@/lib/cn";
 import { isEmail } from "@/lib/validators";
-
-type Role = RegisterRequest["role"];
 
 interface Form {
   name: string;
   email: string;
   phone: string;
   city: string;
-  role: Role;
   password: string;
   confirm: string;
 }
 
 type Errors = Partial<Record<keyof Form, string>>;
 
-const EMPTY: Form = { name: "", email: "", phone: "", city: "", role: "patient", password: "", confirm: "" };
-
-const ROLES: { value: Role; label: string; hint: string }[] = [
-  { value: "patient", label: "Patient", hint: "Book consultations and keep your reports" },
-  { value: "doctor", label: "Doctor", hint: "Consult patients after licence verification" },
-];
+const EMPTY: Form = { name: "", email: "", phone: "", city: "", password: "", confirm: "" };
 
 function validate(form: Form): Errors {
   const errors: Errors = {};
@@ -71,7 +62,6 @@ export default function RegisterPage() {
         email: form.email.trim(),
         phone: form.phone.trim() || null,
         city: form.city.trim() || null,
-        role: form.role,
         password: form.password,
       });
       setCreated(user);
@@ -106,7 +96,7 @@ export default function RegisterPage() {
               </span>
               <h1 className="text-h2">Account created</h1>
               <p className="text-body text-muted">
-                Welcome to AarogyaHub, {created.name}. Your {created.role} account for {created.email} is ready.
+                Welcome to AarogyaHub, {created.name}. Your patient account for {created.email} is ready.
               </p>
               <div className="flex gap-3">
                 <Link to={`/login?email=${encodeURIComponent(created.email)}`} className={buttonClass("primary", "md")}>
@@ -122,7 +112,7 @@ export default function RegisterPage() {
               <span className="mb-6 flex size-12 items-center justify-center rounded-lg bg-primary-soft text-primary">
                 <UserPlus className="size-6" strokeWidth={1.75} aria-hidden />
               </span>
-              <h1 className="text-h2">Create your account</h1>
+              <h1 className="text-h2">Create your patient account</h1>
               <p className="mt-2 text-body text-muted">See verified doctors online, from home.</p>
 
               <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5">
@@ -135,36 +125,6 @@ export default function RegisterPage() {
                     {serverError}
                   </div>
                 )}
-
-                <fieldset className="flex flex-col gap-2">
-                  <legend className="mb-1.5 text-small font-semibold text-text">I am a</legend>
-                  <div className="grid grid-cols-2 gap-3">
-                    {ROLES.map((r) => (
-                      <label
-                        key={r.value}
-                        className={cn(
-                          "flex cursor-pointer flex-col gap-1 rounded-md border p-3 transition-colors",
-                          form.role === r.value
-                            ? "border-primary bg-primary-soft"
-                            : "border-border-strong bg-surface hover:bg-surface-muted",
-                        )}
-                      >
-                        <span className="flex items-center gap-2 text-body font-semibold">
-                          <input
-                            type="radio"
-                            name="role"
-                            value={r.value}
-                            checked={form.role === r.value}
-                            onChange={() => update("role", r.value)}
-                            className="accent-primary"
-                          />
-                          {r.label}
-                        </span>
-                        <span className="text-small text-muted">{r.hint}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
 
                 <Field label="Full name" id="name" error={errors.name}>
                   <Input autoComplete="name" value={form.name} onChange={(e) => update("name", e.target.value)} />
@@ -230,6 +190,12 @@ export default function RegisterPage() {
               </form>
 
               <p className="mt-6 text-center text-small text-muted">
+                Are you a doctor?{" "}
+                <Link to="/register/doctor" className="font-semibold text-primary hover:underline">
+                  Join as a doctor
+                </Link>
+              </p>
+              <p className="mt-2 text-center text-small text-muted">
                 Already have an account?{" "}
                 <Link to="/login" className="font-semibold text-primary hover:underline">
                   Log in

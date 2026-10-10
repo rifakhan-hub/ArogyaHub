@@ -1,4 +1,4 @@
-import type { AppointmentStatus, KbStatus, Role, VerificationStatus } from "@/api/types";
+import type { AppointmentStatus, Role, VerificationStatus } from "@/api/types";
 import { cn } from "@/lib/cn";
 
 const tones = {
@@ -29,9 +29,8 @@ export function Badge({ tone, children }: { tone: Tone; children: React.ReactNod
 
 export const VERIFICATION_LABELS: Record<VerificationStatus, string> = {
   pending: "Pending review",
-  verified: "Verified",
+  verified: "Approved",
   rejected: "Rejected",
-  suspended: "Suspended",
 };
 
 export const APPOINTMENT_LABELS: Record<AppointmentStatus, string> = {
@@ -49,13 +48,10 @@ export const ROLE_LABELS: Record<Role | "visitor", string> = {
   visitor: "Visitor",
 };
 
-export const CATEGORY_LABELS = { faq: "FAQ", howto: "How-to", health: "Health" };
-
 const verificationTones: Record<VerificationStatus, Tone> = {
   pending: "warning",
   verified: "success",
   rejected: "danger",
-  suspended: "neutral",
 };
 
 const appointmentTones: Record<AppointmentStatus, Tone> = {
@@ -82,10 +78,4 @@ export function RoleBadge({ role }: { role: Role }) {
 
 export function UserStatusBadge({ active }: { active: boolean }) {
   return <Badge tone={active ? "success" : "danger"}>{active ? "Active" : "Blocked"}</Badge>;
-}
-
-export function ArticleStatusBadge({ status }: { status: KbStatus }) {
-  return (
-    <Badge tone={status === "published" ? "success" : "neutral"}>{status === "published" ? "Published" : "Draft"}</Badge>
-  );
 }

@@ -28,7 +28,15 @@ def get_current_user(
     return user
 
 
-def require_admin(user: User = Depends(get_current_user)) -> User:
-    if user.role != Role.ADMIN:
-        raise AppError(403, "FORBIDDEN", "Only admins can do this.")
-    return user
+def require_role(role: Role):
+    def checker(user: User = Depends(get_current_user)) -> User:
+        if user.role != role:
+            raise AppError(403, "FORBIDDEN", f"Only {role.value}s can do this.")
+        return user
+
+    return checker
+
+
+require_admin = require_role(Role.ADMIN)
+require_doctor = require_role(Role.DOCTOR)
+require_patient = require_role(Role.PATIENT)

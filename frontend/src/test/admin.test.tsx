@@ -1,15 +1,15 @@
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { db } from "@/mocks/db";
 import { renderApp, signInAs } from "./render";
+import { doctors, PASSWORD, users } from "./server";
 
 describe("access", () => {
   it("sends signed-out visitors to the login page", async () => {
-    const { router } = renderApp("/admin/users");
+    const { router } = renderApp("/admin/patients");
     await screen.findByRole("heading", { name: /log in to aarogyahub/i });
     expect(router.state.location.pathname).toBe("/login");
-    expect(router.state.location.search).toBe("?next=%2Fadmin%2Fusers");
+    expect(router.state.location.search).toBe("?next=%2Fadmin%2Fpatients");
   });
 
   it("shows the no-access page to a signed-in patient", { timeout: 90_000 }, async () => {
@@ -18,17 +18,15 @@ describe("access", () => {
     await screen.findByRole("heading", { name: /don't have access/i }, { timeout: 80_000 });
     expect(router.state.location.pathname).toBe("/403");
   });
-});
 
-describe("login", () => {
   it("signs an admin in and opens the page they asked for", async () => {
     const user = userEvent.setup();
-    const { router } = renderApp("/login?next=%2Fadmin%2Faudit");
+    const { router } = renderApp("/login?next=%2Fadmin%2Fdoctors");
     await user.type(await screen.findByLabelText("Email"), "admin@aarogyahub.in");
-    await user.type(screen.getByLabelText("Password"), "Admin@123");
+    await user.type(screen.getByLabelText("Password"), PASSWORD);
     await user.click(screen.getByRole("button", { name: "Log in" }));
-    await screen.findByRole("heading", { name: "Audit log" });
-    expect(router.state.location.pathname).toBe("/admin/audit");
+    await screen.findByRole("heading", { name: "Doctors" });
+    expect(router.state.location.pathname).toBe("/admin/doctors");
   });
 
   it("explains a wrong password and keeps the email", async () => {
@@ -42,58 +40,76 @@ describe("login", () => {
   });
 });
 
-describe("doctor verification", () => {
-  const pendingDoctors = () =>
-    db.doctors.filter((d) => d.verification_status === "pending").sort((a, b) => a.submitted_at.localeCompare(b.submitted_at));
-
-  it("needs a reason before rejecting, and sends nothing without one", async () => {
+describe("doctors", () => {
+  it("lists doctors waiting for review and approves one", async () => {
     signInAs("admin");
     const user = userEvent.setup();
-    const [doctor] = pendingDoctors();
-    renderApp("/admin/verifications");
+    renderApp("/admin/doctors");
 
-    await user.click(await screen.findByRole("button", { name: doctor.name }));
-    const panel = await screen.findByRole("dialog", { name: `Review ${doctor.name}` });
-    await user.click(await within(panel).findByRole("button", { name: "Reject" }));
+    await user.click(await screen.findByText("Dr. Ravi Kapoor"));
+    const panel = await screen.findByRole("dialog", { name: "Review Dr. Ravi Kapoor" });
+    expect(within(panel).getByText("PMC-11000")).toBeInTheDocument();
 
-    expect(await within(panel).findByText(/at least 10 characters/i)).toBeInTheDocument();
-    expect(db.doctors.find((d) => d.id === doctor.id)?.verification_status).toBe("pending");
+    await user.click(within(panel).getByRole("button", { name: "Approve" }));
+    expect(await screen.findByText("Approved Dr. Ravi Kapoor")).toBeInTheDocument();
+    expect(doctors.find((d) => d.id === "11")?.verification_status).toBe("verified");
   });
 
-  it("approves a doctor, moves to the next one and writes an audit entry", async () => {
+  it("needs a reason before rejecting", async () => {
     signInAs("admin");
     const user = userEvent.setup();
-    const [first, second] = pendingDoctors();
-    renderApp("/admin/verifications");
+    renderApp("/admin/doctors");
 
-    await user.click(await screen.findByRole("button", { name: first.name }));
-    const panel = await screen.findByRole("dialog", { name: `Review ${first.name}` });
-    await user.click(await within(panel).findByRole("button", { name: "Approve" }));
+    await user.click(await screen.findByText("Dr. Ravi Kapoor"));
+    const panel = await screen.findByRole("dialog", { name: "Review Dr. Ravi Kapoor" });
+    await user.click(within(panel).getByRole("button", { name: "Reject" }));
+    await user.click(within(panel).getByRole("button", { name: "Confirm rejection" }));
+    expect(within(panel).getByText(/at least 10 characters/)).toBeInTheDocument();
+    expect(doctors.find((d) => d.id === "11")?.verification_status).toBe("pending");
 
-    await screen.findByRole("dialog", { name: `Review ${second.name}` });
-    expect(db.doctors.find((d) => d.id === first.id)?.verification_status).toBe("verified");
-    expect(db.audit.find((l) => l.action === "doctor.approve" && l.entity_id === first.id)).toBeDefined();
+    await user.type(within(panel).getByLabelText("Reason for rejecting"), "Licence photo is blurry");
+    await user.click(within(panel).getByRole("button", { name: "Confirm rejection" }));
+    expect(await screen.findByText("Rejected Dr. Ravi Kapoor")).toBeInTheDocument();
+    expect(doctors.find((d) => d.id === "11")?.rejection_reason).toBe("Licence photo is blurry");
   });
 });
 
-describe("users", () => {
-  it("requires a reason, then blocks the user", async () => {
+describe("patients", () => {
+  it("blocks a patient after a reason is given", async () => {
     signInAs("admin");
     const user = userEvent.setup();
-    const target = db.users.find((u) => u.role === "patient" && u.is_active && u.email !== "patient@aarogyahub.in")!;
-    renderApp(`/admin/users?open=${target.id}`);
+    renderApp("/admin/patients");
 
-    const panel = await screen.findByRole("dialog", { name: target.name });
-    await user.click(await within(panel).findByRole("button", { name: "Block user" }));
+    await user.click(await screen.findByText("Rahul Verma"));
+    const panel = await screen.findByRole("dialog", { name: "Patient Rahul Verma" });
+    await user.click(within(panel).getByRole("button", { name: "Block patient" }));
+    expect(within(panel).getByText(/at least 10 characters/)).toBeInTheDocument();
 
-    const confirm = await screen.findByRole("dialog", { name: `Block ${target.name}?` });
-    await user.click(within(confirm).getByRole("button", { name: "Block user" }));
-    expect(await within(confirm).findByText(/at least 10 characters/i)).toBeInTheDocument();
+    await user.type(within(panel).getByLabelText("Reason for blocking"), "Repeated no-shows");
+    await user.click(within(panel).getByRole("button", { name: "Block patient" }));
+    expect(await screen.findByText("Blocked Rahul Verma")).toBeInTheDocument();
+    expect(users.find((u) => u.name === "Rahul Verma")?.is_active).toBe(false);
+  });
+});
 
-    await user.type(within(confirm).getByLabelText("Reason"), "Abusive messages to three doctors");
-    await user.click(within(confirm).getByRole("button", { name: "Block user" }));
+describe("patient details", () => {
+  it("shows the patient's health details", async () => {
+    signInAs("admin");
+    const user = userEvent.setup();
+    renderApp("/admin/patients");
 
-    await waitFor(() => expect(db.users.find((u) => u.id === target.id)?.is_active).toBe(false));
-    expect(db.audit[0]).toMatchObject({ action: "user.block", entity_id: target.id });
+    await user.click(await screen.findByText("Priya Sharma"));
+    const panel = await screen.findByRole("dialog", { name: "Patient Priya Sharma" });
+    expect(await within(panel).findByText("B+")).toBeInTheDocument();
+    expect(within(panel).getByText("Penicillin")).toBeInTheDocument();
+  });
+});
+
+describe("pages that are not built yet", () => {
+  it("shows an empty page", async () => {
+    signInAs("admin");
+    renderApp("/admin/audit");
+    expect(await screen.findByRole("heading", { name: "Audit log" })).toBeInTheDocument();
+    expect(screen.getByText("Nothing here yet")).toBeInTheDocument();
   });
 });

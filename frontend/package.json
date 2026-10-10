@@ -13,11 +13,6 @@
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "msw": {
-    "workerDirectory": [
-      "public"
-    ]
-  },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/mukta": "^5.3.0",
@@ -25,15 +20,11 @@
     "lucide-react": "^1.49.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-markdown": "^10.1.0",
     "react-router": "^7.18.4",
-    "recharts": "^3.10.1",
-    "rehype-sanitize": "^6.0.0",
     "sonner": "^2.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",

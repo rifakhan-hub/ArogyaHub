@@ -2,8 +2,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, configure } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from "vitest";
 import { setAccessToken } from "@/api/client";
-import { resetDb } from "@/mocks/db";
-import { server } from "./server";
+import { resetData, server } from "./server";
 
 configure({ asyncUtilTimeout: 10000 });
 
@@ -24,7 +23,7 @@ HTMLDialogElement.prototype.close ??= function (this: HTMLDialogElement) {
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 beforeEach(() => {
-  resetDb();
+  resetData();
   localStorage.clear();
   setAccessToken(null);
 });

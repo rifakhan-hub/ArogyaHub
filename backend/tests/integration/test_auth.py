@@ -40,6 +40,12 @@ def test_password_is_stored_hashed(client, session):
     assert stored.startswith("$argon2")
 
 
+def test_register_always_creates_a_patient(client):
+    res = client.post(REGISTER, json={**NEW_USER, "role": "admin"})
+    assert res.status_code == 201
+    assert res.json()["role"] == "patient"
+
+
 def test_register_optional_fields(client):
     res = client.post(REGISTER, json={**NEW_USER, "phone": "", "city": None})
     assert res.status_code == 201
@@ -60,7 +66,7 @@ def test_register_duplicate_email_and_phone(client):
 
 
 def test_register_invalid_input(client):
-    for bad in ({"email": "not-an-email"}, {"password": "short"}, {"role": "admin"}, {"name": "A"}, {"phone": "12ab"}):
+    for bad in ({"email": "not-an-email"}, {"password": "short"}, {"name": "A"}, {"phone": "12ab"}):
         res = client.post(REGISTER, json={**NEW_USER, **bad})
         assert res.status_code == 422, bad
         assert res.json()["error"]["code"] == "VALIDATION_ERROR"

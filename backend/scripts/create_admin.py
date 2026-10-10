@@ -6,7 +6,7 @@ from sqlalchemy import select
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
-from app.models import Role, User
+from app.models import Admin, Role, User
 
 
 def main() -> None:
@@ -36,6 +36,10 @@ def main() -> None:
                 )
             )
             print(f"Created the admin {email}.")
+        db.flush()
+        user = db.scalar(select(User).where(User.email == email))
+        if not db.scalar(select(Admin).where(Admin.user_id == user.id)):
+            db.add(Admin(user_id=user.id))
         db.commit()
 
 

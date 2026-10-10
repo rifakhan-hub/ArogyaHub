@@ -84,6 +84,23 @@ describe("patient portal", () => {
     ]);
   });
 
+  it("shows and edits the patient's own profile", async () => {
+    signInAs("patient");
+    const user = userEvent.setup();
+    renderApp("/patient/profile");
+
+    expect(await screen.findByText("B+")).toBeInTheDocument();
+    expect(screen.getByText("Penicillin")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Edit profile" }));
+    await user.selectOptions(screen.getByLabelText(/blood group/i), "O-");
+    await user.clear(screen.getByLabelText(/allergies/i));
+    await user.click(screen.getByRole("button", { name: "Save profile" }));
+
+    expect(await screen.findByText("O-")).toBeInTheDocument();
+    expect(screen.getByText("None recorded")).toBeInTheDocument();
+  });
+
   it("keeps patients out of the doctor portal", async () => {
     signInAs("patient");
     const { router } = renderApp("/doctor");

@@ -1,10 +1,6 @@
 export type Role = "patient" | "doctor" | "admin";
-export type VerificationStatus = "pending" | "verified" | "rejected" | "suspended";
+export type VerificationStatus = "pending" | "verified" | "rejected";
 export type AppointmentStatus = "scheduled" | "in_progress" | "completed" | "cancelled" | "no_show";
-export type KbCategory = "faq" | "howto" | "health";
-export type KbStatus = "draft" | "published";
-export type Audience = "visitor" | "patient" | "doctor";
-export type DocType = "licence" | "degree" | "id";
 
 export interface Paginated<T> {
   items: T[];
@@ -14,34 +10,21 @@ export interface Paginated<T> {
 }
 
 export interface ApiErrorBody {
-  error: { code: string; message: string; request_id?: string; details?: unknown };
+  error: { code: string; message: string; request_id?: string };
 }
-
-export interface ListParams {
-  page?: number;
-  page_size?: number;
-  q?: string;
-  sort?: string;
-}
-
 
 export interface User {
   id: string;
   name: string;
   email: string;
   phone: string | null;
+  city: string | null;
   role: Role;
   is_active: boolean;
   is_email_verified: boolean;
+  blocked_reason: string | null;
   created_at: string;
   last_login_at: string | null;
-  blocked_reason?: string | null;
-  city?: string | null;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
 }
 
 export interface TokenResponse {
@@ -50,199 +33,56 @@ export interface TokenResponse {
   user: User;
 }
 
-export interface RegisterRequest {
+export interface AccountInput {
   name: string;
   email: string;
   phone: string | null;
   city: string | null;
-  role: "patient" | "doctor";
   password: string;
 }
 
-export interface UserListParams extends ListParams {
-  role?: Role;
-  status?: "active" | "blocked";
+export interface DoctorProfileInput {
+  specialization: string;
+  license_number: string;
+  council: string;
+  experience_years: number;
+  consultation_fee: number;
+  qualifications: string;
+  bio: string | null;
 }
 
-export interface UserDetail extends User {
-  doctor_id: string | null;
-  verification_status: VerificationStatus | null;
-  stats: {
-    appointments: number;
-    completed: number;
-    cancelled: number;
-    no_show: number;
-    last_appointment_at: string | null;
-  };
-}
+export type DoctorRegisterInput = AccountInput & DoctorProfileInput;
 
-export interface BlockUserRequest {
-  blocked: boolean;
-  reason?: string;
-}
-
-
-export interface DoctorDocument {
-  id: string;
-  doc_type: DocType;
-  file_name: string;
-  mime: string;
-  size: number;
-  uploaded_at: string;
-}
-
-export interface Doctor {
+export interface Doctor extends DoctorProfileInput {
   id: string;
   user_id: string;
   name: string;
   email: string;
   phone: string | null;
-  city: string;
-  specialization: string;
-  qualifications: string[];
-  languages: string[];
-  experience_years: number;
-  license_number: string;
-  council: string;
-  council_name: string;
+  city: string | null;
+  is_active: boolean;
   verification_status: VerificationStatus;
   rejection_reason: string | null;
-  verified_by: { id: string; name: string } | null;
-  verified_at: string | null;
   submitted_at: string;
-  consultation_fee: number;
-  bio: string;
-  is_active: boolean;
-  documents: DoctorDocument[];
+  reviewed_at: string | null;
 }
 
-export interface DoctorListParams extends ListParams {
-  status?: VerificationStatus;
-}
+export type Gender = "female" | "male" | "other";
+export type BloodGroup = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
 
-export type DoctorStatusCounts = Record<VerificationStatus, number>;
-
-export interface DoctorList extends Paginated<Doctor> {
-  counts: DoctorStatusCounts;
-}
-
-export type VerifyAction = "approve" | "reject" | "suspend";
-
-export interface VerifyRequest {
-  action: VerifyAction;
-  reason?: string;
-}
-
-export interface SignedUrl {
-  url: string;
-  mime: string;
-  expires_at: string;
-}
-
-
-export interface PersonRef {
-  id: string;
+export interface PatientProfileInput {
   name: string;
+  phone: string | null;
+  city: string | null;
+  date_of_birth: string | null;
+  gender: Gender | null;
+  blood_group: BloodGroup | null;
+  allergies: string | null;
 }
 
-export interface AppointmentEvent {
-  at: string;
-  status: AppointmentStatus;
-  by: string;
-  note?: string;
-}
-
-export interface Appointment {
-  id: string;
-  patient: PersonRef;
-  doctor: PersonRef & { specialization: string };
-  start_time: string;
-  end_time: string;
-  slot_duration_min: 5 | 10 | 15 | 20 | 30;
-  status: AppointmentStatus;
-  reason: string;
-  fee_snapshot: number;
-  cancelled_by: Role | null;
-  cancel_reason: string | null;
-  reports_shared: number;
-  created_at: string;
-  history: AppointmentEvent[];
-}
-
-export interface AppointmentListParams extends ListParams {
-  status?: AppointmentStatus;
-  from?: string;
-  to?: string;
-}
-
-export interface AppointmentOverride {
-  status: Extract<AppointmentStatus, "cancelled" | "completed" | "no_show">;
-  reason: string;
-}
-
-
-export interface KbArticle {
-  id: string;
-  title: string;
-  slug: string;
-  category: KbCategory;
-  status: KbStatus;
-  audience: Audience[];
-  body_md: string;
-  reviewer: string | null;
-  author: PersonRef;
-  chunk_count: number;
-  created_at: string;
-  updated_at: string;
-  published_at: string | null;
-  last_indexed_at: string | null;
-}
-
-export interface KbListParams extends ListParams {
-  category?: KbCategory;
-  status?: KbStatus;
-}
-
-export type KbArticleInput = Pick<
-  KbArticle,
-  "title" | "slug" | "category" | "audience" | "body_md" | "reviewer"
->;
-
-
-export interface AuditLog {
-  id: string;
-  actor: (PersonRef & { role: Role }) | null;
-  action: string;
-  entity_type: "doctor" | "user" | "appointment" | "kb_article" | "report" | "auth";
-  entity_id: string;
-  metadata: Record<string, unknown>;
-  ip: string;
-  request_id: string;
-  created_at: string;
-}
-
-export interface AuditListParams extends ListParams {
-  action?: string;
-  entity_type?: AuditLog["entity_type"];
-  from?: string;
-  to?: string;
-}
-
-
-export interface Analytics {
-  kpis: {
-    consultations_today: number;
-    consultations_today_prev: number;
-    live_now: number;
-    active_doctors: number;
-    active_doctors_prev: number;
-    pending_verifications: number;
-    oldest_pending_hours: number;
-    new_users_7d: number;
-    new_users_7d_prev: number;
-  };
-  consultations_per_day: { date: string; completed: number; cancelled: number; no_show: number }[];
-  new_users_per_week: { week: string; patient: number; doctor: number }[];
-  appointment_status: Record<AppointmentStatus, number>;
-  top_specializations: { name: string; count: number }[];
+export interface Patient extends User {
+  date_of_birth: string | null;
+  gender: Gender | null;
+  blood_group: BloodGroup | null;
+  allergies: string | null;
 }

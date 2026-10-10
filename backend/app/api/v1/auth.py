@@ -7,8 +7,10 @@ from app.core.config import settings
 from app.core.deps import get_db
 from app.core.errors import AppError
 from app.core.security import create_access_token, create_refresh_token, hash_password, read_token, verify_password
-from app.models.user import Role, User, utcnow
-from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
+from app.models import Doctor, Patient, Role, User
+from app.models.user import utcnow
+from app.schemas.auth import AccountFields, LoginRequest, RegisterRequest, TokenResponse
+from app.schemas.doctor import PROFILE_FIELDS, DoctorOut, DoctorRegisterRequest
 from app.schemas.user import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -19,27 +21,22 @@ COOKIE_PATH = "/api/v1/auth"
 
 @router.post("/register", response_model=UserOut, status_code=201)
 def register(body: RegisterRequest, db: Session = Depends(get_db)):
-    email = body.email.lower()
-    if db.scalar(select(User.id).where(User.email == email)):
-        raise AppError(409, "EMAIL_TAKEN", "An account with this email already exists.")
-    if body.phone and db.scalar(select(User.id).where(User.phone == body.phone)):
-        raise AppError(409, "PHONE_TAKEN", "An account with this phone number already exists.")
-
-    user = User(
-        name=body.name,
-        email=email,
-        phone=body.phone,
-        city=body.city,
-        role=Role(body.role),
-        password_hash=hash_password(body.password),
-    )
-    db.add(user)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise AppError(409, "EMAIL_TAKEN", "An account with this email or phone number already exists.") from None
+    user = new_user(db, body, Role.PATIENT)
+    db.add(Patient(user=user))
+    save(db)
     return UserOut.model_validate(user)
+
+
+@router.post("/register/doctor", response_model=DoctorOut, status_code=201)
+def register_doctor(body: DoctorRegisterRequest, db: Session = Depends(get_db)):
+    user = new_user(db, body, Role.DOCTOR)
+    if db.scalar(select(Doctor.id).where(Doctor.license_number == body.license_number)):
+        raise AppError(409, "LICENSE_TAKEN", "Another doctor has already registered this licence number.")
+
+    doctor = Doctor(user=user, **body.model_dump(include=PROFILE_FIELDS))
+    db.add(doctor)
+    save(db)
+    return DoctorOut.from_doctor(doctor)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -67,6 +64,30 @@ def refresh(response: Response, refresh_token: str | None = Cookie(None), db: Se
 @router.post("/logout", status_code=204)
 def logout(response: Response):
     response.delete_cookie(COOKIE_NAME, path=COOKIE_PATH)
+
+
+def new_user(db: Session, body: AccountFields, role: Role) -> User:
+    email = body.email.lower()
+    if db.scalar(select(User.id).where(User.email == email)):
+        raise AppError(409, "EMAIL_TAKEN", "An account with this email already exists.")
+    if body.phone and db.scalar(select(User.id).where(User.phone == body.phone)):
+        raise AppError(409, "PHONE_TAKEN", "An account with this phone number already exists.")
+    return User(
+        name=body.name,
+        email=email,
+        phone=body.phone,
+        city=body.city,
+        role=role,
+        password_hash=hash_password(body.password),
+    )
+
+
+def save(db: Session) -> None:
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise AppError(409, "ALREADY_EXISTS", "An account with these details already exists.") from None
 
 
 def sign_in(user: User, response: Response) -> TokenResponse:
