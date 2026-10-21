@@ -1,6 +1,17 @@
 from fastapi import APIRouter
 
-from app.api.v1 import appointments, auth, availability, consultations, doctors, documents, me, patients, reports
+from app.api.v1 import (
+    appointments,
+    auth,
+    availability,
+    consultations,
+    dicom,
+    doctors,
+    documents,
+    me,
+    patients,
+    reports,
+)
 from app.api.v1.admin import doctors as admin_doctors
 from app.api.v1.admin import patients as admin_patients
 
@@ -15,6 +26,7 @@ for module in (
     appointments,
     consultations,
     reports,
+    dicom,
     admin_doctors,
     admin_patients,
 ):

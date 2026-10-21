@@ -1,4 +1,4 @@
-from tests.conftest import kapoor_id
+from tests.conftest import kapoor_id, make_dicom
 
 URL = "/api/v1/reports"
 
@@ -16,7 +16,7 @@ def test_patient_uploads_and_lists_reports(patient):
     assert report["report_type"] == "pdf"
     assert report["shared_with"] == []
 
-    upload(patient, "Chest X-ray", ("chest.dcm", b"DICM data", "application/dicom"))
+    upload(patient, "Chest X-ray", ("chest.dcm", make_dicom(), "application/dicom"))
     reports = patient.get(f"{URL}/me").json()
     assert [r["report_type"] for r in reports] == ["dicom", "pdf"]
     assert patient.get(f"{URL}/{report['id']}/file").content == PDF[1]

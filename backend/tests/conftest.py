@@ -1,7 +1,11 @@
+import zipfile
 from datetime import datetime, timedelta
+from io import BytesIO
 
 import pytest
 from fastapi.testclient import TestClient
+from pydicom.dataset import FileDataset, FileMetaDataset
+from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, generate_uid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -130,3 +134,42 @@ def book_first_slot(patient_client, doctor_client):
     return patient_client.post(
         "/api/v1/appointments", json={"doctor_id": doctor_id, "start_time": slot["start"], "reason": "Skin rash"}
     )
+
+
+def make_dicom(study_uid=None, series_uid=None, series_number=1, instance_number=1) -> bytes:
+    meta = FileMetaDataset()
+    meta.MediaStorageSOPClassUID = CTImageStorage
+    meta.MediaStorageSOPInstanceUID = generate_uid()
+    meta.TransferSyntaxUID = ExplicitVRLittleEndian
+    ds = FileDataset("scan.dcm", {}, file_meta=meta, preamble=b"\0" * 128)
+    ds.SOPClassUID = CTImageStorage
+    ds.SOPInstanceUID = meta.MediaStorageSOPInstanceUID
+    ds.StudyInstanceUID = study_uid or generate_uid()
+    ds.SeriesInstanceUID = series_uid or generate_uid()
+    ds.StudyDate = "20260110"
+    ds.StudyDescription = "CT Chest"
+    ds.SeriesDescription = f"Series {series_number}"
+    ds.Modality = "CT"
+    ds.BodyPartExamined = "CHEST"
+    ds.SeriesNumber = series_number
+    ds.InstanceNumber = instance_number
+    ds.Rows = 2
+    ds.Columns = 2
+    ds.SamplesPerPixel = 1
+    ds.PhotometricInterpretation = "MONOCHROME2"
+    ds.BitsAllocated = 8
+    ds.BitsStored = 8
+    ds.HighBit = 7
+    ds.PixelRepresentation = 0
+    ds.PixelData = bytes(4)
+    out = BytesIO()
+    ds.save_as(out, enforce_file_format=True)
+    return out.getvalue()
+
+
+def make_zip(files: dict[str, bytes]) -> bytes:
+    out = BytesIO()
+    with zipfile.ZipFile(out, "w") as archive:
+        for name, data in files.items():
+            archive.writestr(name, data)
+    return out.getvalue()

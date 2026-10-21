@@ -4,12 +4,15 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.deps import current_doctor, get_current_user, get_db, require_patient
 from app.core.errors import AppError
 from app.core.storage import delete_file, save_upload, send_file
-from app.models import Doctor, Report, ReportShare, ReportType, Role, User
+from app.models import Doctor, Report, ReportShare, ReportType, User
 from app.schemas.report import ReportOut, SharedReportOut, ShareRequest
 from app.services.appointments import find_listed_doctor
+from app.services.dicom import read_study
+from app.services.reports import find_visible_report
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -31,6 +34,12 @@ def upload_report(
         report_type=TYPES[Path(stored.file_name).suffix.lower()],
         **vars(stored),
     )
+    if report.report_type == ReportType.DICOM:
+        try:
+            report.study = read_study(settings.UPLOAD_DIR / stored.storage_path)
+        except AppError:
+            delete_file(stored.storage_path)
+            raise
     db.add(report)
     db.commit()
     return ReportOut.build(report)
@@ -58,13 +67,7 @@ def shared_with_me(doctor: Doctor = Depends(current_doctor), db: Session = Depen
 
 @router.get("/{report_id}/file")
 def open_report(report_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    report = db.get(Report, report_id)
-    allowed = report and (
-        report.patient_id == user.id
-        or (user.role == Role.DOCTOR and any(s.doctor.user_id == user.id for s in report.shares))
-    )
-    if not allowed:
-        raise AppError(404, "NOT_FOUND", "We could not find that report.")
+    report = find_visible_report(db, report_id, user)
     return send_file(report.storage_path, report.file_name, report.content_type)
 
 

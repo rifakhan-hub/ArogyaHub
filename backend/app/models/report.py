@@ -5,6 +5,7 @@ from sqlalchemy import DateTime, Enum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.dicom import DicomStudy
 from app.models.doctor import Doctor
 from app.models.user import utcnow
 
@@ -29,6 +30,7 @@ class Report(Base):
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     shares: Mapped[list["ReportShare"]] = relationship(cascade="all, delete-orphan", lazy="selectin")
+    study: Mapped[DicomStudy | None] = relationship(cascade="all, delete-orphan")
 
 
 class ReportShare(Base):
