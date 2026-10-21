@@ -29,14 +29,13 @@ describe("patient portal", () => {
     const user = userEvent.setup();
     const { router } = renderApp("/patient/doctors");
 
-    await user.click(await screen.findByRole("button", { name: "Book Dr. Anjali Mehta" }));
-    const dialog = await screen.findByRole("dialog", { name: "Book Dr. Anjali Mehta" });
-    const confirm = within(dialog).getByRole("button", { name: "Confirm booking" });
-    expect(confirm).toBeDisabled();
+    await user.click(await screen.findByRole("button", { name: /Dr. Anjali Mehta/ }));
+    const book = screen.getByRole("button", { name: "Book appointment" });
+    expect(book).toBeDisabled();
 
-    await user.click(await within(dialog).findByRole("button", { name: "09:30" }));
-    await user.type(within(dialog).getByLabelText(/reason/i), "Itchy skin");
-    await user.click(confirm);
+    await user.click(await screen.findByRole("button", { name: "09:30" }));
+    await user.type(screen.getByLabelText(/reason/i), "Itchy skin");
+    await user.click(book);
 
     expect(await screen.findByRole("heading", { name: "My appointments" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/patient/appointments");

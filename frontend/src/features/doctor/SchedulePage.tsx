@@ -16,8 +16,8 @@ import { refreshData, useApi } from "@/hooks/useApi";
 import { formatLongDate, weekdayIndex } from "@/lib/calendar";
 import { formatTime, todayIST, toMinutes } from "@/lib/dates";
 import { plural } from "@/lib/format";
+import { MonthCalendar } from "@/features/portal/MonthCalendar";
 import { DAYS, SLOT_LENGTHS, shortTime } from "./data";
-import { MonthCalendar } from "./MonthCalendar";
 
 const SLOT_OPTIONS = SLOT_LENGTHS.map((m) => ({ value: String(m), label: `${m} minutes` }));
 
@@ -55,8 +55,8 @@ export default function SchedulePage() {
 
   function dayInfo(date: string) {
     return {
-      consultations: active.filter((a) => istDay(a.start_time) === date).length,
-      hasHours: allBlocks.some((b) => b.day_of_week === weekdayIndex(date)),
+      count: active.filter((a) => istDay(a.start_time) === date).length,
+      marked: allBlocks.some((b) => b.day_of_week === weekdayIndex(date)),
     };
   }
 
@@ -107,6 +107,8 @@ export default function SchedulePage() {
             }}
             onMonthChange={setView}
             dayInfo={dayInfo}
+            countLabel="Consultations"
+            markLabel="Working hours"
           />
         </Card>
 

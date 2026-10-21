@@ -6,8 +6,9 @@ import { cn } from "@/lib/cn";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export interface DayInfo {
-  consultations: number;
-  hasHours: boolean;
+  count?: number;
+  marked?: boolean;
+  disabled?: boolean;
 }
 
 interface MonthCalendarProps {
@@ -18,9 +19,21 @@ interface MonthCalendarProps {
   onSelect: (date: string) => void;
   onMonthChange: (view: { year: number; month: number }) => void;
   dayInfo: (date: string) => DayInfo;
+  countLabel: string;
+  markLabel?: string;
 }
 
-export function MonthCalendar({ year, month, today, selected, onSelect, onMonthChange, dayInfo }: MonthCalendarProps) {
+export function MonthCalendar({
+  year,
+  month,
+  today,
+  selected,
+  onSelect,
+  onMonthChange,
+  dayInfo,
+  countLabel,
+  markLabel,
+}: MonthCalendarProps) {
   const days = monthGrid(year, month);
   const monthPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
 
@@ -59,9 +72,9 @@ export function MonthCalendar({ year, month, today, selected, onSelect, onMonthC
         ))}
 
         {days.map((date) => {
-          const info = dayInfo(date);
+          const { count = 0, marked = false, disabled = false } = dayInfo(date);
           const isSelected = date === selected;
-          const label = [formatLongDate(date), info.consultations > 0 && `${info.consultations} consultations`]
+          const label = [formatLongDate(date), count > 0 && `${count} ${countLabel.toLowerCase()}`]
             .filter(Boolean)
             .join(", ");
 
@@ -71,11 +84,13 @@ export function MonthCalendar({ year, month, today, selected, onSelect, onMonthC
               type="button"
               aria-label={label}
               aria-pressed={isSelected}
+              disabled={disabled}
               onClick={() => onSelect(date)}
               className={cn(
                 "flex h-20 flex-col justify-between rounded-md border p-2 text-left transition-colors",
                 isSelected ? "border-primary bg-primary-soft" : "border-border bg-surface hover:border-border-strong",
-                !date.startsWith(monthPrefix) && "opacity-45",
+                (disabled || !date.startsWith(monthPrefix)) && "opacity-45",
+                disabled && "cursor-not-allowed hover:border-border",
               )}
             >
               <span
@@ -87,11 +102,9 @@ export function MonthCalendar({ year, month, today, selected, onSelect, onMonthC
                 {Number(date.slice(8))}
               </span>
               <span className="flex items-center gap-1">
-                {info.hasHours && <span className="h-1.5 w-5 rounded-full bg-primary/60" />}
-                {info.consultations > 0 && (
-                  <span className="rounded-full bg-info-soft px-1.5 text-caption font-semibold text-info">
-                    {info.consultations}
-                  </span>
+                {marked && <span className="h-1.5 w-5 rounded-full bg-primary/60" />}
+                {count > 0 && (
+                  <span className="rounded-full bg-info-soft px-1.5 text-caption font-semibold text-info">{count}</span>
                 )}
               </span>
             </button>
@@ -100,11 +113,13 @@ export function MonthCalendar({ year, month, today, selected, onSelect, onMonthC
       </div>
 
       <div className="flex flex-wrap gap-x-5 gap-y-2 text-caption text-muted">
+        {markLabel && (
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-5 rounded-full bg-primary/60" /> {markLabel}
+          </span>
+        )}
         <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-5 rounded-full bg-primary/60" /> Working hours
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="rounded-full bg-info-soft px-1.5 font-semibold text-info">2</span> Consultations
+          <span className="rounded-full bg-info-soft px-1.5 font-semibold text-info">2</span> {countLabel}
         </span>
       </div>
     </div>
