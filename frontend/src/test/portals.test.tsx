@@ -62,7 +62,25 @@ describe("patient portal", () => {
     await user.click(await screen.findByRole("button", { name: "View report" }));
     const dialog = await screen.findByRole("dialog", { name: "Consultation report" });
     expect(await within(dialog).findByText("Contact dermatitis")).toBeInTheDocument();
-    expect(within(dialog).getByText("Cetirizine 10 mg")).toBeInTheDocument();
+    const row = within(dialog).getByRole("row", { name: /Cetirizine/ });
+    expect(row).toHaveTextContent("10 mg");
+    expect(row).toHaveTextContent("At night");
+    expect(within(dialog).getByRole("link", { name: "Print prescription" })).toHaveAttribute(
+      "href",
+      "/patient/prescription/22",
+    );
+  });
+
+  it("shows a printable prescription", async () => {
+    signInAs("patient");
+    renderApp("/patient/prescription/22");
+
+    expect(await screen.findByRole("heading", { name: "Dr. Anjali Mehta" })).toBeInTheDocument();
+    expect(screen.getByText(/PMC-1001/)).toBeInTheDocument();
+    expect(screen.getByText("Priya Sharma")).toBeInTheDocument();
+    expect(screen.getByText("Penicillin")).toBeInTheDocument();
+    expect(screen.getByRole("row", { name: /Cetirizine/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Print" })).toBeEnabled();
   });
 
   it("uploads, shares and deletes reports", async () => {
@@ -142,10 +160,20 @@ describe("doctor portal", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "Consultation report" });
     await user.type(await within(dialog).findByLabelText("Diagnosis"), "Viral fever");
-    await user.type(within(dialog).getByLabelText(/prescription/i), "Paracetamol 500 mg");
+    await user.type(within(dialog).getByLabelText("Name"), "Paracetamol");
+    await user.click(within(dialog).getByRole("button", { name: "Save report" }));
+    expect(await within(dialog).findByText("Write how often to take it")).toBeInTheDocument();
+
+    await user.type(within(dialog).getByLabelText(/^Dose/), "500 mg");
+    await user.type(within(dialog).getByLabelText("How often"), "Three times a day");
+    await user.type(within(dialog).getByLabelText(/^Days/), "3");
+    await user.click(within(dialog).getByRole("button", { name: "Add medicine" }));
     await user.click(within(dialog).getByRole("button", { name: "Save report" }));
     expect(await screen.findByText("Saved the report for Rahul Verma")).toBeInTheDocument();
     expect(consultationReports["21"].diagnosis).toBe("Viral fever");
+    expect(consultationReports["21"].medicines).toEqual([
+      { name: "Paracetamol", dose: "500 mg", frequency: "Three times a day", days: 3, notes: null },
+    ]);
 
     await user.click(screen.getByRole("button", { name: "End consultation" }));
     expect(await screen.findByText("Ended with Rahul Verma")).toBeInTheDocument();

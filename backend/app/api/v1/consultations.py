@@ -6,7 +6,16 @@ from sqlalchemy.orm import Session
 
 from app.core.deps import current_doctor, get_current_user, get_db
 from app.core.errors import AppError
-from app.models import Appointment, AppointmentStatus, Consultation, ConsultationReport, Doctor, User
+from app.models import (
+    Appointment,
+    AppointmentStatus,
+    Consultation,
+    ConsultationMedicine,
+    ConsultationReport,
+    Doctor,
+    Patient,
+    User,
+)
 from app.models.user import utcnow
 from app.schemas.consultation import ConsultationOut, ConsultationReportIn, ConsultationReportOut
 from app.services.appointments import find_my_appointment
@@ -64,11 +73,12 @@ def write_report(
     if not report:
         report = ConsultationReport(consultation_id=consultation.id)
         db.add(report)
-    for field, value in body.model_dump().items():
+    for field, value in body.model_dump(exclude={"medicines"}).items():
         setattr(report, field, value)
+    report.medicines = [ConsultationMedicine(position=i, **m.model_dump()) for i, m in enumerate(body.medicines)]
     report.updated_at = utcnow()
     db.commit()
-    return ConsultationReportOut.build(report)
+    return report_out(db, appointment, report)
 
 
 @router.get("/report", response_model=ConsultationReportOut)
@@ -78,7 +88,7 @@ def read_report(appointment_id: int, user: User = Depends(get_current_user), db:
     report = db.scalar(select(ConsultationReport).where(ConsultationReport.consultation_id == consultation.id))
     if not report:
         raise AppError(404, "NO_REPORT", "The doctor hasn't written the consultation report yet.")
-    return ConsultationReportOut.build(report)
+    return report_out(db, appointment, report)
 
 
 def find_consultation(db: Session, appointment: Appointment) -> Consultation:
@@ -86,3 +96,8 @@ def find_consultation(db: Session, appointment: Appointment) -> Consultation:
     if not consultation:
         raise AppError(404, "NOT_STARTED", "This consultation hasn't started yet.")
     return consultation
+
+
+def report_out(db: Session, appointment: Appointment, report: ConsultationReport) -> ConsultationReportOut:
+    profile = db.scalar(select(Patient).where(Patient.user_id == appointment.patient_id))
+    return ConsultationReportOut.build(report, appointment, profile)

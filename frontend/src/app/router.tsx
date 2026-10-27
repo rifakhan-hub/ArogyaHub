@@ -71,6 +71,16 @@ export const routes: RouteObject[] = [
           { path: "*", element: <NotFound /> },
         ],
       },
+      {
+        path: "/patient/prescription/:id",
+        element: <RequireRole allow="patient" />,
+        children: [{ index: true, lazy: page(() => import("@/features/portal/PrescriptionPage")) }],
+      },
+      {
+        path: "/doctor/prescription/:id",
+        element: <RequireRole allow="doctor" />,
+        children: [{ index: true, lazy: page(() => import("@/features/portal/PrescriptionPage")) }],
+      },
       { path: "/403", element: <Forbidden /> },
       { path: "*", element: <NotFound /> },
     ],

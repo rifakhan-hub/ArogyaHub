@@ -14,7 +14,8 @@ FastAPI + MySQL. It has sign-up and login for patients and doctors, doctor profi
 | `doctor_availability` | A doctor's weekly hours: day, start, end, slot length (5 to 30 minutes) |
 | `appointments` | A booking: patient, doctor, start and end time (UTC), status, fee, reason |
 | `consultations` | When a booked consultation started and ended |
-| `consultation_reports` | The doctor's report: symptoms, diagnosis, prescription, advice, follow-up date |
+| `consultation_reports` | The doctor's report: symptoms, diagnosis, other instructions, advice, follow-up date |
+| `consultation_medicines` | The medicines in a report: name, dose, how often, days, notes, in order |
 | `reports` | Files a patient uploads: PDFs, images and scans |
 | `report_shares` | Which doctors a patient has shared each report with |
 | `dicom_studies` | The scan inside a DICOM report: study UID, date, description, modality, body part, counts |
@@ -53,8 +54,8 @@ All routes start with `/api/v1`.
 | `POST /appointments/{id}/consultation/start` | its doctor | Start, from 10 minutes before until the end time |
 | `POST /appointments/{id}/consultation/end` | its doctor | End; the appointment becomes completed |
 | `GET /appointments/{id}/consultation` | its patient or doctor | Start and end times |
-| `PUT /appointments/{id}/consultation/report` | its doctor | Write or update the consultation report |
-| `GET /appointments/{id}/consultation/report` | its patient or doctor | Read the consultation report |
+| `PUT /appointments/{id}/consultation/report` | its doctor | Write or update the consultation report and its medicine list |
+| `GET /appointments/{id}/consultation/report` | its patient or doctor | Read the report, with the doctor and patient details for printing |
 | `POST /reports` | patient | Upload a report (PDF, JPG, PNG, DCM, ZIP) |
 | `GET /reports/me` | patient | Own reports, with who they're shared with |
 | `GET /reports/shared-with-me` | doctor | Reports patients shared with this doctor |
@@ -89,7 +90,8 @@ All routes start with `/api/v1`.
 2. `GET /doctors/{id}/slots?date=` turns those hours into slots for that day, leaving out past and booked slots.
 3. The patient books one of those exact slot times. Anything else gets `SLOT_NOT_AVAILABLE`.
 4. Two people can't book the same slot: `appointments.active_slot` holds the start time while the booking is active, and a unique key on (doctor, active_slot) blocks a second booking. Cancelling clears it, so the slot opens again.
-5. The doctor starts the consultation from 10 minutes before the slot, ends it, and writes the consultation report. The patient can read it.
+5. The doctor starts the consultation from 10 minutes before the slot, ends it, and writes the consultation report: notes, a list of medicines, advice and a follow-up date. Saving again replaces the medicine list.
+6. The patient reads the report and can print the prescription. It shows the doctor's registration number and the patient's age, gender and allergies.
 
 ## How scans work
 
@@ -137,7 +139,7 @@ backend/
       document.py            doctor_documents table
       availability.py        doctor_availability table
       appointment.py         appointments table
-      consultation.py        consultations and consultation_reports tables
+      consultation.py        consultations, consultation_reports and consultation_medicines tables
       report.py              reports and report_shares tables
       dicom.py               dicom_studies, dicom_series and dicom_instances tables
       admin.py               admins table

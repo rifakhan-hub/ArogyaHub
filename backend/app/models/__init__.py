@@ -1,7 +1,7 @@
 from app.models.admin import Admin
 from app.models.appointment import ACTIVE_STATUSES, Appointment, AppointmentStatus
 from app.models.availability import Availability
-from app.models.consultation import Consultation, ConsultationReport
+from app.models.consultation import Consultation, ConsultationMedicine, ConsultationReport
 from app.models.dicom import DicomInstance, DicomSeries, DicomStudy
 from app.models.doctor import Doctor, VerificationStatus
 from app.models.document import DoctorDocument, DocumentType
@@ -16,6 +16,7 @@ __all__ = [
     "AppointmentStatus",
     "Availability",
     "Consultation",
+    "ConsultationMedicine",
     "ConsultationReport",
     "DicomInstance",
     "DicomSeries",

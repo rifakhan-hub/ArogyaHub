@@ -68,6 +68,20 @@ let nextId = 100;
 const MINUTE = 60_000;
 const at = (minutesFromNow: number) => new Date(Date.now() + minutesFromNow * MINUTE).toISOString();
 
+function printDetails() {
+  return {
+    consulted_at: at(-60 * 24 * 5),
+    doctor_name: "Dr. Anjali Mehta",
+    specialization: "Dermatology",
+    doctor_qualifications: "MBBS, MD",
+    doctor_registration: "PMC-1001 · Punjab Medical Council",
+    patient_name: "Priya Sharma",
+    patient_age: 32,
+    patient_gender: "female",
+    patient_allergies: "Penicillin",
+  };
+}
+
 function makeAppointment(id: string, minutesFromNow: number, status: Appointment["status"], patient = "2"): Appointment {
   return {
     id,
@@ -107,10 +121,12 @@ export function resetData() {
       consultation_id: "1",
       symptoms: "Itchy rash",
       diagnosis: "Contact dermatitis",
-      prescription: "Cetirizine 10 mg",
+      medicines: [{ name: "Cetirizine", dose: "10 mg", frequency: "At night", days: 5, notes: "After food" }],
+      prescription: null,
       advice: null,
       follow_up_date: null,
       updated_at: at(-60 * 24 * 5),
+      ...printDetails(),
     },
   };
   blocks = [{ id: "30", day_of_week: 0, start_time: "09:00:00", end_time: "12:00:00", slot_minutes: 15 }];
@@ -278,7 +294,13 @@ export const handlers = [
 
   http.put(`${API}/appointments/:id/consultation/report`, async ({ params, request }) => {
     const body = (await request.json()) as ConsultationReport;
-    consultationReports[params.id as string] = { ...body, id: newId(), consultation_id: "1", updated_at: at(0) };
+    consultationReports[params.id as string] = {
+      ...printDetails(),
+      ...body,
+      id: newId(),
+      consultation_id: "1",
+      updated_at: at(0),
+    };
     return HttpResponse.json(consultationReports[params.id as string]);
   }),
 

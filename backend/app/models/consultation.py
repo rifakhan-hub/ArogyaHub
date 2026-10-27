@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Text
+from sqlalchemy import Date, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -30,3 +30,20 @@ class ConsultationReport(Base):
     advice: Mapped[str | None] = mapped_column(Text)
     follow_up_date: Mapped[date | None] = mapped_column(Date)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+
+    medicines: Mapped[list["ConsultationMedicine"]] = relationship(
+        cascade="all, delete-orphan", lazy="selectin", order_by="ConsultationMedicine.position"
+    )
+
+
+class ConsultationMedicine(Base):
+    __tablename__ = "consultation_medicines"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    report_id: Mapped[int] = mapped_column(ForeignKey("consultation_reports.id"), index=True)
+    position: Mapped[int]
+    name: Mapped[str] = mapped_column(String(120))
+    dose: Mapped[str | None] = mapped_column(String(60))
+    frequency: Mapped[str] = mapped_column(String(60))
+    days: Mapped[int | None]
+    notes: Mapped[str | None] = mapped_column(String(200))

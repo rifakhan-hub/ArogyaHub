@@ -1,6 +1,6 @@
 # AarogyaHub database diagram
 
-All 15 tables and how they connect. GitHub and VS Code (with a Mermaid extension) draw this as a picture.
+All 16 tables and how they connect. GitHub and VS Code (with a Mermaid extension) draw this as a picture.
 
 ```mermaid
 erDiagram
@@ -15,6 +15,7 @@ erDiagram
     users |o--o{ appointments : "cancels"
     appointments ||--o| consultations : "takes place as"
     consultations ||--o| consultation_reports : "has"
+    consultation_reports ||--o{ consultation_medicines : "prescribes"
     users ||--o{ reports : "uploads (patient)"
     reports ||--o{ report_shares : "shared through"
     doctors ||--o{ report_shares : "can view"
@@ -116,10 +117,21 @@ erDiagram
         int consultation_id FK, UK
         text symptoms "nullable"
         text diagnosis
-        text prescription "nullable"
+        text prescription "other instructions, nullable"
         text advice "nullable"
         date follow_up_date "nullable"
         datetime updated_at
+    }
+
+    consultation_medicines {
+        int id PK
+        int report_id FK
+        int position
+        string name
+        string dose "nullable"
+        string frequency
+        int days "nullable"
+        string notes "nullable"
     }
 
     reports {
@@ -191,6 +203,7 @@ erDiagram
 | users | appointments | one to many | `appointments.cancelled_by` |
 | appointments | consultations | one to zero-or-one | `consultations.appointment_id` (unique) |
 | consultations | consultation_reports | one to zero-or-one | `consultation_reports.consultation_id` (unique) |
+| consultation_reports | consultation_medicines | one to many | `consultation_medicines.report_id` |
 | users (patient) | reports | one to many | `reports.patient_id` |
 | reports | report_shares | one to many | `report_shares.report_id` |
 | doctors | report_shares | one to many | `report_shares.doctor_id` |

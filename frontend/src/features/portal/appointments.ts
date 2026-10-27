@@ -13,3 +13,7 @@ export function canStart(appointment: Appointment, now = new Date()) {
   const opens = new Date(appointment.start_time).getTime() - 10 * 60_000;
   return appointment.status === "scheduled" && now.getTime() >= opens && now < new Date(appointment.end_time);
 }
+
+export function prescriptionPath(role: "patient" | "doctor", appointmentId: string) {
+  return `/${role}/prescription/${appointmentId}`;
+}

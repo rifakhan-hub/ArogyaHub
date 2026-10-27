@@ -127,9 +127,18 @@ export interface Appointment {
   created_at: string;
 }
 
+export interface Medicine {
+  name: string;
+  dose: string | null;
+  frequency: string;
+  days: number | null;
+  notes: string | null;
+}
+
 export interface ConsultationReportInput {
   symptoms: string | null;
   diagnosis: string;
+  medicines: Medicine[];
   prescription: string | null;
   advice: string | null;
   follow_up_date: string | null;
@@ -139,6 +148,15 @@ export interface ConsultationReport extends ConsultationReportInput {
   id: string;
   consultation_id: string;
   updated_at: string;
+  consulted_at: string;
+  doctor_name: string;
+  specialization: string;
+  doctor_qualifications: string;
+  doctor_registration: string;
+  patient_name: string;
+  patient_age: number | null;
+  patient_gender: string | null;
+  patient_allergies: string | null;
 }
 
 export type ReportType = "pdf" | "image" | "dicom";

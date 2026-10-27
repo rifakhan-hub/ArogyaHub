@@ -1,10 +1,11 @@
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import select
 
 from app.models import Appointment, AppointmentStatus, Doctor, User
 from app.models.user import utcnow
+from app.schemas.consultation import age
 from tests.conftest import book_first_slot
 
 
@@ -33,7 +34,11 @@ def url(appointment_id: str, path: str = "") -> str:
 REPORT = {
     "symptoms": "Itchy rash on both arms for a week",
     "diagnosis": "Contact dermatitis",
-    "prescription": "Cetirizine 10 mg at night for 5 days",
+    "medicines": [
+        {"name": "Cetirizine", "dose": "10 mg", "frequency": "At night", "days": 5, "notes": "After food"},
+        {"name": "Calamine lotion", "dose": "", "frequency": "Twice a day", "days": 7, "notes": ""},
+    ],
+    "prescription": "Stop the medicines if the rash spreads",
     "advice": "Avoid the new soap",
     "follow_up_date": "2030-01-15",
 }
@@ -81,9 +86,34 @@ def test_doctor_writes_and_patient_reads_the_report(session, verified, patient):
     seen = patient.get(url(appointment_id, "/report")).json()
     assert seen["prescription"] == REPORT["prescription"]
     assert seen["follow_up_date"] == "2030-01-15"
+    assert [(m["name"], m["dose"], m["days"]) for m in seen["medicines"]] == [
+        ("Cetirizine", "10 mg", 5),
+        ("Calamine lotion", None, 7),
+    ]
+    assert (seen["doctor_name"], seen["patient_name"]) == ("Dr. Ravi Kapoor", "Priya Sharma")
+    assert seen["doctor_registration"] == "PMC-2002 · Punjab Medical Council"
 
 
-@pytest.mark.parametrize("bad", [{"diagnosis": ""}, {"follow_up_date": "not a date"}])
+def test_saving_again_replaces_the_medicines(session, verified):
+    appointment_id = appointment_now(session)
+    verified.post(url(appointment_id, "/start"))
+    verified.put(url(appointment_id, "/report"), json=REPORT)
+    one = {**REPORT, "medicines": [{"name": "Paracetamol", "frequency": "When needed"}]}
+    saved = verified.put(url(appointment_id, "/report"), json=one).json()
+    assert [m["name"] for m in saved["medicines"]] == ["Paracetamol"]
+    assert verified.put(url(appointment_id, "/report"), json={**REPORT, "medicines": []}).json()["medicines"] == []
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"diagnosis": ""},
+        {"follow_up_date": "not a date"},
+        {"medicines": [{"name": "Cetirizine", "frequency": ""}]},
+        {"medicines": [{"name": " ", "frequency": "Once a day"}]},
+        {"medicines": [{"name": "Cetirizine", "frequency": "Once a day", "days": 0}]},
+    ],
+)
 def test_report_fields_are_checked(session, verified, bad):
     appointment_id = appointment_now(session)
     verified.post(url(appointment_id, "/start"))
@@ -94,3 +124,8 @@ def test_patient_cannot_write_the_report(session, verified, patient):
     appointment_id = appointment_now(session)
     verified.post(url(appointment_id, "/start"))
     assert patient.put(url(appointment_id, "/report"), json=REPORT).status_code == 403
+
+
+def test_age_counts_whole_years():
+    assert age(date(1994, 5, 17), today=date(2026, 5, 16)) == 31
+    assert age(date(1994, 5, 17), today=date(2026, 5, 17)) == 32
