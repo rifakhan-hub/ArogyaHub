@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, toApiError } from "@/api/client";
 
 const DATA_CHANGED = "aarogyahub:data-changed";
@@ -19,7 +19,9 @@ export function useApi<T>(url: string | null, params?: Params) {
     if (!url) return;
     const requestKey = `${url}?${query}#${version}`;
     let ignore = false;
-    const cleanParams = Object.fromEntries(Object.entries(JSON.parse(query)).filter(([, v]) => v !== "" && v != null));
+    const cleanParams = Object.fromEntries(
+      Object.entries(JSON.parse(query)).filter(([, v]) => v !== "" && v != null),
+    );
     api
       .get<T>(url, { params: cleanParams })
       .then((res) => !ignore && setResult({ key: requestKey, data: res.data }))
@@ -35,11 +37,12 @@ export function useApi<T>(url: string | null, params?: Params) {
     return () => window.removeEventListener(DATA_CHANGED, onChange);
   }, []);
 
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
   const loading = url !== null && result?.key !== key;
   return {
     data: result?.data,
     loading,
     error: loading ? undefined : result?.error,
-    reload: () => setVersion((v) => v + 1),
+    reload,
   };
 }

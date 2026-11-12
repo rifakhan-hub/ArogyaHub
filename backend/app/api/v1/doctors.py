@@ -13,7 +13,7 @@ from app.schemas.availability import DoctorCard, SlotOut
 from app.schemas.common import Page
 from app.schemas.doctor import DoctorOut, DoctorProfileIn
 from app.services.appointments import find_listed_doctor
-from app.services.slots import free_slots, taken_slots
+from app.services.slots import free_slots, next_free_slot, taken_slots
 
 router = APIRouter(prefix="/doctors", tags=["doctors"])
 
@@ -72,12 +72,15 @@ def list_doctors(
     query = query.order_by(User.name, Doctor.id)
 
     doctors, total = paginate(db, query, page, page_size)
-    return Page(items=[DoctorCard.build(d) for d in doctors], total=total, page=page, page_size=page_size)
+    now = utcnow()
+    items = [DoctorCard.build(d, next_free_slot(db, d.id, now)) for d in doctors]
+    return Page(items=items, total=total, page=page, page_size=page_size)
 
 
 @router.get("/{doctor_id}", response_model=DoctorCard)
 def get_doctor(doctor_id: int, db: Session = Depends(get_db)):
-    return DoctorCard.build(find_listed_doctor(db, doctor_id))
+    doctor = find_listed_doctor(db, doctor_id)
+    return DoctorCard.build(doctor, next_free_slot(db, doctor.id, utcnow()))
 
 
 @router.get("/{doctor_id}/slots", response_model=list[SlotOut])

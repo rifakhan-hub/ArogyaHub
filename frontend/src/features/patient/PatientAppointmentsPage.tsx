@@ -1,4 +1,4 @@
-import { CalendarX } from "lucide-react";
+import { CalendarX, Video } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
-import { byStart, isUpcoming } from "@/features/portal/appointments";
+import { byStart, canJoin, consultationPath, isUpcoming } from "@/features/portal/appointments";
 import { ConsultationReportModal } from "@/features/portal/ConsultationReportModal";
 import { STATUS_BORDER } from "@/features/portal/status";
 import { refreshData, useApi } from "@/hooks/useApi";
@@ -62,7 +62,15 @@ export default function PatientAppointmentsPage() {
         ) : (
           upcoming.map((a) => (
             <AppointmentRow key={a.id} appointment={a}>
-              {a.status === "scheduled" && (
+              {canJoin(a) && (
+                <Link
+                  to={consultationPath("patient", a.id)}
+                  className={buttonClass("primary", "sm")}
+                >
+                  <Video aria-hidden /> Join call
+                </Link>
+              )}
+              {a.status === "scheduled" && new Date(a.start_time) > new Date() && (
                 <Button variant="danger-outline" size="sm" onClick={() => handleCancel(a)}>
                   Cancel
                 </Button>
@@ -77,6 +85,11 @@ export default function PatientAppointmentsPage() {
         {past.length === 0 && <p className="text-small text-muted">Nothing here yet.</p>}
         {past.map((a) => (
           <AppointmentRow key={a.id} appointment={a}>
+            {canJoin(a) && (
+              <Link to={consultationPath("patient", a.id)} className={buttonClass("primary", "sm")}>
+                <Video aria-hidden /> Join call
+              </Link>
+            )}
             {a.status === "completed" && (
               <Button variant="outline" size="sm" onClick={() => setViewing(a)}>
                 View report
@@ -91,19 +104,31 @@ export default function PatientAppointmentsPage() {
   );
 }
 
-function AppointmentRow({ appointment, children }: { appointment: Appointment; children?: React.ReactNode }) {
+function AppointmentRow({
+  appointment,
+  children,
+}: {
+  appointment: Appointment;
+  children?: React.ReactNode;
+}) {
   return (
     <Card
-      className={cn("flex flex-wrap items-center justify-between gap-4 border-l-4 p-4", STATUS_BORDER[appointment.status])}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-4 border-l-4 p-4",
+        STATUS_BORDER[appointment.status],
+      )}
     >
       <div className="flex items-center gap-3">
         <Avatar name={appointment.doctor_name} />
         <div>
           <p className="font-semibold">{appointment.doctor_name}</p>
           <p className="text-small text-muted">
-            {appointment.specialization} · {formatDateTime(appointment.start_time)} · {formatINR(appointment.fee)}
+            {appointment.specialization} · {formatDateTime(appointment.start_time)} ·{" "}
+            {formatINR(appointment.fee)}
           </p>
-          {appointment.cancel_reason && <p className="text-small text-muted">Reason: {appointment.cancel_reason}</p>}
+          {appointment.cancel_reason && (
+            <p className="text-small text-muted">Reason: {appointment.cancel_reason}</p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-3">

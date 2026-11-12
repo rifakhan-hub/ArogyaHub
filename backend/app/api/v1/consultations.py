@@ -1,12 +1,13 @@
-from datetime import timedelta
+import asyncio
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.deps import current_doctor, get_current_user, get_db
 from app.core.errors import AppError
 from app.models import (
+    ACTIVE_STATUSES,
     Appointment,
     AppointmentStatus,
     Consultation,
@@ -17,12 +18,12 @@ from app.models import (
     User,
 )
 from app.models.user import utcnow
-from app.schemas.consultation import ConsultationOut, ConsultationReportIn, ConsultationReportOut
+from app.schemas.consultation import CallOut, ConsultationOut, ConsultationReportIn, ConsultationReportOut
+from app.services import calls
 from app.services.appointments import find_my_appointment
+from app.services.calls import JOIN_EARLY, JOIN_GRACE
 
 router = APIRouter(prefix="/appointments/{appointment_id}/consultation", tags=["consultations"])
-
-JOIN_EARLY = timedelta(minutes=10)
 
 
 @router.post("/start", response_model=ConsultationOut, status_code=201)
@@ -52,6 +53,49 @@ def end(appointment_id: int, doctor: Doctor = Depends(current_doctor), db: Sessi
     appointment.set_status(AppointmentStatus.COMPLETED)
     db.commit()
     return ConsultationOut.build(consultation)
+
+
+@router.post("/join", response_model=CallOut)
+def join_call(appointment_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    appointment = find_my_appointment(db, appointment_id, user)
+    if appointment.status not in ACTIVE_STATUSES:
+        raise AppError(409, "CALL_CLOSED", "This consultation is over.")
+    if not appointment.start_time - JOIN_EARLY <= utcnow() <= appointment.end_time + JOIN_GRACE:
+        raise AppError(403, "OUTSIDE_JOIN_WINDOW", "You can join from 10 minutes before the booked time.")
+
+    is_doctor = appointment.doctor.user_id == user.id
+    if appointment.status == AppointmentStatus.SCHEDULED:
+        if is_doctor:
+            raise AppError(409, "NOT_STARTED", "Start the consultation first.")
+        return CallOut(status=appointment.status, waiting=True)
+    return CallOut(status=appointment.status, waiting=False, ice_servers=calls.ice_servers())
+
+
+@router.websocket("/signal")
+async def signal(websocket: WebSocket, appointment_id: int, db: Session = Depends(get_db)):
+    await websocket.accept()
+    try:
+        hello = await asyncio.wait_for(websocket.receive_json(), timeout=10)
+        role = calls.caller_role(db, appointment_id, hello.get("token") if isinstance(hello, dict) else None)
+    except calls.CallRefused as refused:
+        await websocket.close(refused.code, refused.reason)
+        return
+    except WebSocketDisconnect:
+        return
+    except (TimeoutError, ValueError):
+        await websocket.close(4401, "Log in again to join the call.")
+        return
+    finally:
+        db.close()
+
+    await calls.enter(appointment_id, role, websocket)
+    try:
+        while True:
+            await calls.relay(appointment_id, role, await websocket.receive_json())
+    except (WebSocketDisconnect, ValueError):
+        pass
+    finally:
+        await calls.leave(appointment_id, role, websocket)
 
 
 @router.get("", response_model=ConsultationOut)

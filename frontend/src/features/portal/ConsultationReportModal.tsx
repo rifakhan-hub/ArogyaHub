@@ -38,41 +38,49 @@ export function ConsultationReportModal({
             ) : !report ? (
               <Spinner />
             ) : (
-              <>
-                <ReportSection title="Symptoms">{report.symptoms ?? "—"}</ReportSection>
-                <ReportSection title="Diagnosis">{report.diagnosis}</ReportSection>
-                <section className="flex flex-col gap-2">
-                  <h3 className="text-small text-subtle font-semibold tracking-wide uppercase">
-                    Medicines
-                  </h3>
-                  <MedicineTable medicines={report.medicines} />
-                </section>
-                {report.prescription && (
-                  <ReportSection title="Other instructions">{report.prescription}</ReportSection>
-                )}
-                {report.advice && <ReportSection title="Advice">{report.advice}</ReportSection>}
-                <ReportSection title="Follow-up">
-                  {report.follow_up_date
-                    ? formatDate(report.follow_up_date)
-                    : "No follow-up needed"}
-                </ReportSection>
-              </>
+              <ReportView report={report} />
             )}
           </PanelBody>
           {report && (
             <PanelFooter>
-              <Link
-                to={prescriptionPath("patient", appointment.id)}
-                target="_blank"
-                className={buttonClass("primary")}
-              >
-                <Printer aria-hidden /> Print prescription
-              </Link>
+              <PrintLink appointmentId={appointment.id} />
             </PanelFooter>
           )}
         </>
       )}
     </SidePanel>
+  );
+}
+
+export function ReportView({ report }: { report: ConsultationReport }) {
+  return (
+    <>
+      <ReportSection title="Symptoms">{report.symptoms ?? "—"}</ReportSection>
+      <ReportSection title="Diagnosis">{report.diagnosis}</ReportSection>
+      <section className="flex flex-col gap-2">
+        <h3 className="text-small text-subtle font-semibold tracking-wide uppercase">Medicines</h3>
+        <MedicineTable medicines={report.medicines} />
+      </section>
+      {report.prescription && (
+        <ReportSection title="Other instructions">{report.prescription}</ReportSection>
+      )}
+      {report.advice && <ReportSection title="Advice">{report.advice}</ReportSection>}
+      <ReportSection title="Follow-up">
+        {report.follow_up_date ? formatDate(report.follow_up_date) : "No follow-up needed"}
+      </ReportSection>
+    </>
+  );
+}
+
+export function PrintLink({ appointmentId }: { appointmentId: string }) {
+  return (
+    <Link
+      to={prescriptionPath("patient", appointmentId)}
+      target="_blank"
+      className={buttonClass("primary")}
+    >
+      <Printer aria-hidden /> Print prescription
+    </Link>
   );
 }
 

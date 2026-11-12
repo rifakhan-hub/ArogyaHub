@@ -9,6 +9,7 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Input, Textarea } from "@/components/ui/Input";
 import { PanelBody, PanelFooter, PanelHeader, SidePanel } from "@/components/ui/Modal";
+import { Spinner } from "@/components/ui/Spinner";
 import { prescriptionPath } from "@/features/portal/appointments";
 import { refreshData, useApi } from "@/hooks/useApi";
 
@@ -60,20 +61,32 @@ export function ReportForm({
   appointment: Appointment | null;
   onClose: () => void;
 }) {
-  const url = appointment ? `/appointments/${appointment.id}/consultation/report` : null;
-  const { data: saved, loading } = useApi<ConsultationReport>(url);
-
   return (
     <SidePanel open={appointment !== null} onClose={onClose} label="Consultation report">
-      {appointment && !loading && (
-        <ReportFields
-          key={saved?.updated_at ?? appointment.id}
-          appointment={appointment}
-          saved={saved}
-          onClose={onClose}
-        />
-      )}
+      {appointment && <ReportEditor appointment={appointment} onClose={onClose} />}
     </SidePanel>
+  );
+}
+
+export function ReportEditor({
+  appointment,
+  onClose,
+}: {
+  appointment: Appointment;
+  onClose?: () => void;
+}) {
+  const { data: saved, loading } = useApi<ConsultationReport>(
+    `/appointments/${appointment.id}/consultation/report`,
+  );
+
+  if (loading && !saved) return <Spinner />;
+  return (
+    <ReportFields
+      key={saved?.updated_at ?? appointment.id}
+      appointment={appointment}
+      saved={saved}
+      onClose={onClose}
+    />
   );
 }
 
@@ -84,7 +97,7 @@ function ReportFields({
 }: {
   appointment: Appointment;
   saved: ConsultationReport | undefined;
-  onClose: () => void;
+  onClose?: () => void;
 }) {
   const [form, setForm] = useState({
     symptoms: saved?.symptoms ?? "",
@@ -137,7 +150,7 @@ function ReportFields({
       });
       toast.success(`Saved the report for ${appointment.patient_name}`);
       refreshData();
-      onClose();
+      onClose?.();
     } catch (err) {
       toast.error((err as ApiError).message);
     } finally {
@@ -147,12 +160,14 @@ function ReportFields({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-      <PanelHeader>
-        <h2 className="text-h4 font-semibold">Consultation report</h2>
-        <p className="text-small text-muted">
-          {appointment.patient_name} can read this report and print the prescription.
-        </p>
-      </PanelHeader>
+      {onClose && (
+        <PanelHeader>
+          <h2 className="text-h4 font-semibold">Consultation report</h2>
+          <p className="text-small text-muted">
+            {appointment.patient_name} can read this report and print the prescription.
+          </p>
+        </PanelHeader>
+      )}
       <PanelBody>
         <section className="flex flex-col gap-4">
           <h3 className="text-small text-subtle font-semibold tracking-wide uppercase">Notes</h3>
@@ -266,9 +281,11 @@ function ReportFields({
             <Printer aria-hidden /> Print prescription
           </Link>
         )}
-        <Button variant="outline" onClick={onClose}>
-          Close
-        </Button>
+        {onClose && (
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        )}
         <Button type="submit" loading={saving}>
           Save report
         </Button>

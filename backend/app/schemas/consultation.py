@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models import Appointment, Consultation, ConsultationMedicine, ConsultationReport, Patient
+from app.models import Appointment, AppointmentStatus, Consultation, ConsultationMedicine, ConsultationReport, Patient
 from app.schemas.common import as_utc, blank_to_none
 
 
@@ -25,6 +25,12 @@ class ConsultationOut(BaseModel):
             started_at=consultation.started_at,
             ended_at=consultation.ended_at,
         )
+
+
+class CallOut(BaseModel):
+    status: AppointmentStatus
+    waiting: bool
+    ice_servers: list[dict] = []
 
 
 class MedicineIn(BaseModel):

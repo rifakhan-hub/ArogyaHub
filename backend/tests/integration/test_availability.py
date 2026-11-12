@@ -60,3 +60,15 @@ def test_booked_slots_are_not_offered(patient, verified):
     day = tomorrow_ist().isoformat()
     slots = patient.get(f"/api/v1/doctors/{kapoor_id(patient)}/slots", params={"date": day}).json()
     assert len(slots) == 5
+
+
+def test_doctor_list_shows_the_next_free_slot(client, patient, verified):
+    assert client.get("/api/v1/doctors").json()["items"][0]["next_slot"] is None
+
+    day = tomorrow_ist()
+    open_morning_hours(verified, day)
+    slots = client.get(f"/api/v1/doctors/{kapoor_id(client)}/slots", params={"date": day.isoformat()}).json()
+    assert client.get("/api/v1/doctors").json()["items"][0]["next_slot"] == slots[0]["start"]
+
+    book_first_slot(patient, verified)
+    assert client.get(f"/api/v1/doctors/{kapoor_id(client)}").json()["next_slot"] == slots[1]["start"]

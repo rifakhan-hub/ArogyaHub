@@ -96,6 +96,7 @@ export interface DoctorCard {
   experience_years: number;
   consultation_fee: number;
   bio: string | null;
+  next_slot: string | null;
 }
 
 export interface Slot {
@@ -192,4 +193,10 @@ export interface DoctorDocument {
   content_type: string;
   size: number;
   uploaded_at: string;
+}
+
+export interface CallInfo {
+  status: AppointmentStatus;
+  waiting: boolean;
+  ice_servers: RTCIceServer[];
 }

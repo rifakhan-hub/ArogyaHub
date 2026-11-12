@@ -57,9 +57,15 @@ class DoctorCard(BaseModel):
     experience_years: int
     consultation_fee: int
     bio: str | None
+    next_slot: datetime | None = None
+
+    @field_validator("next_slot")
+    @classmethod
+    def utc(cls, value):
+        return as_utc(value)
 
     @classmethod
-    def build(cls, doctor: Doctor) -> "DoctorCard":
+    def build(cls, doctor: Doctor, next_slot: datetime | None = None) -> "DoctorCard":
         return cls(
             id=str(doctor.id),
             name=doctor.user.name,
@@ -69,4 +75,5 @@ class DoctorCard(BaseModel):
             experience_years=doctor.experience_years,
             consultation_fee=doctor.consultation_fee,
             bio=doctor.bio,
+            next_slot=next_slot,
         )

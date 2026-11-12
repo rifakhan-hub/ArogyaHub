@@ -56,7 +56,10 @@ function makeDoctor(id: string, user: User, status: Doctor["verification_status"
 
 export let users: User[] = [];
 export let doctors: Doctor[] = [];
-export let health: Record<string, Pick<Patient, "date_of_birth" | "gender" | "blood_group" | "allergies">> = {};
+export let health: Record<
+  string,
+  Pick<Patient, "date_of_birth" | "gender" | "blood_group" | "allergies">
+> = {};
 export let appointments: Appointment[] = [];
 export let blocks: AvailabilityBlock[] = [];
 export let reports: Report[] = [];
@@ -82,7 +85,12 @@ function printDetails() {
   };
 }
 
-function makeAppointment(id: string, minutesFromNow: number, status: Appointment["status"], patient = "2"): Appointment {
+function makeAppointment(
+  id: string,
+  minutesFromNow: number,
+  status: Appointment["status"],
+  patient = "2",
+): Appointment {
   return {
     id,
     doctor_id: "10",
@@ -109,7 +117,14 @@ export function resetData() {
     makeUser("5", "Dr. Ravi Kapoor", "kapoor@example.com", "doctor"),
   ];
   doctors = [makeDoctor("10", users[3], "verified"), makeDoctor("11", users[4], "pending")];
-  health = { "2": { date_of_birth: "1994-05-17", gender: "female", blood_group: "B+", allergies: "Penicillin" } };
+  health = {
+    "2": {
+      date_of_birth: "1994-05-17",
+      gender: "female",
+      blood_group: "B+",
+      allergies: "Penicillin",
+    },
+  };
   appointments = [
     makeAppointment("20", 60 * 24, "scheduled"),
     makeAppointment("21", -5, "scheduled", "3"),
@@ -121,7 +136,9 @@ export function resetData() {
       consultation_id: "1",
       symptoms: "Itchy rash",
       diagnosis: "Contact dermatitis",
-      medicines: [{ name: "Cetirizine", dose: "10 mg", frequency: "At night", days: 5, notes: "After food" }],
+      medicines: [
+        { name: "Cetirizine", dose: "10 mg", frequency: "At night", days: 5, notes: "After food" },
+      ],
       prescription: null,
       advice: null,
       follow_up_date: null,
@@ -129,7 +146,9 @@ export function resetData() {
       ...printDetails(),
     },
   };
-  blocks = [{ id: "30", day_of_week: 0, start_time: "09:00:00", end_time: "12:00:00", slot_minutes: 15 }];
+  blocks = [
+    { id: "30", day_of_week: 0, start_time: "09:00:00", end_time: "12:00:00", slot_minutes: 15 },
+  ];
   reports = [
     {
       id: "40",
@@ -139,7 +158,9 @@ export function resetData() {
       content_type: "application/pdf",
       size: 240_000,
       uploaded_at: at(-60 * 24 * 3),
-      shared_with: [{ doctor_id: "10", doctor_name: "Dr. Anjali Mehta", shared_at: at(-60 * 24 * 2) }],
+      shared_with: [
+        { doctor_id: "10", doctor_name: "Dr. Anjali Mehta", shared_at: at(-60 * 24 * 2) },
+      ],
     },
   ];
   documents = [];
@@ -184,7 +205,11 @@ export const handlers = [
     const body = (await request.json()) as { email: string; password: string };
     const user = users.find((u) => u.email === body.email.toLowerCase());
     if (!user || body.password !== PASSWORD) {
-      return fail(401, "INVALID_CREDENTIALS", "That email and password don't match. Check them and try again.");
+      return fail(
+        401,
+        "INVALID_CREDENTIALS",
+        "That email and password don't match. Check them and try again.",
+      );
     }
     sessionUserId = user.id;
     return HttpResponse.json(tokenFor(user));
@@ -192,7 +217,9 @@ export const handlers = [
 
   http.post(`${API}/auth/refresh`, () => {
     const user = users.find((u) => u.id === sessionUserId);
-    return user ? HttpResponse.json(tokenFor(user)) : fail(401, "NO_SESSION", "Log in to continue.");
+    return user
+      ? HttpResponse.json(tokenFor(user))
+      : fail(401, "NO_SESSION", "Log in to continue.");
   }),
 
   http.post(`${API}/auth/logout`, () => {
@@ -209,7 +236,9 @@ export const handlers = [
 
   http.get(`${API}/admin/doctors`, ({ request }) => {
     const status = new URL(request.url).searchParams.get("status");
-    return HttpResponse.json(page(doctors.filter((d) => !status || d.verification_status === status)));
+    return HttpResponse.json(
+      page(doctors.filter((d) => !status || d.verification_status === status)),
+    );
   }),
 
   http.post(`${API}/admin/doctors/:id/verify`, async ({ params, request }) => {
@@ -222,7 +251,9 @@ export const handlers = [
 
   http.get(`${API}/patients/me`, ({ request }) => {
     const user = signedInUser(request);
-    return user?.role === "patient" ? HttpResponse.json(patientOut(user)) : fail(403, "FORBIDDEN", "Only patients.");
+    return user?.role === "patient"
+      ? HttpResponse.json(patientOut(user))
+      : fail(403, "FORBIDDEN", "Only patients.");
   }),
 
   http.put(`${API}/patients/me`, async ({ request }) => {
@@ -242,23 +273,45 @@ export const handlers = [
     HttpResponse.json(patientOut(users.find((u) => u.id === params.id)!)),
   ),
 
-  http.get(`${API}/admin/patients`, () => HttpResponse.json(page(users.filter((u) => u.role === "patient")))),
+  http.get(`${API}/admin/patients`, () =>
+    HttpResponse.json(page(users.filter((u) => u.role === "patient"))),
+  ),
 
   http.get(`${API}/doctors`, ({ request }) => {
-    const q = (new URL(request.url).searchParams.get("q") ?? "").toLowerCase();
-    const listed = doctors.filter((d) => d.verification_status === "verified" && d.name.toLowerCase().includes(q));
-    return HttpResponse.json(page(listed));
+    const search = new URL(request.url).searchParams;
+    const q = (search.get("q") ?? "").toLowerCase();
+    const specialization = search.get("specialization");
+    const listed = doctors.filter(
+      (d) =>
+        d.verification_status === "verified" &&
+        d.name.toLowerCase().includes(q) &&
+        (!specialization || d.specialization === specialization),
+    );
+    return HttpResponse.json(page(listed.map((d) => ({ ...d, next_slot: at(90) }))));
   }),
 
   http.get(`${API}/doctors/:id/slots`, ({ request }) => {
     const date = new URL(request.url).searchParams.get("date");
-    const slots = ["03:30", "04:00", "04:30"].map((t) => ({ start: `${date}T${t}:00Z`, end: `${date}T${t}:00Z` }));
-    return HttpResponse.json(slots.filter((s) => !appointments.some((a) => a.start_time === s.start)));
+    const slots = ["03:30", "04:00", "04:30"].map((t) => ({
+      start: `${date}T${t}:00Z`,
+      end: `${date}T${t}:00Z`,
+    }));
+    return HttpResponse.json(
+      slots.filter((s) => !appointments.some((a) => a.start_time === s.start)),
+    );
   }),
 
   http.post(`${API}/appointments`, async ({ request }) => {
-    const body = (await request.json()) as { doctor_id: number; start_time: string; reason: string | null };
-    const appointment = { ...makeAppointment(newId(), 0, "scheduled"), start_time: body.start_time, reason: body.reason };
+    const body = (await request.json()) as {
+      doctor_id: number;
+      start_time: string;
+      reason: string | null;
+    };
+    const appointment = {
+      ...makeAppointment(newId(), 0, "scheduled"),
+      start_time: body.start_time,
+      reason: body.reason,
+    };
     appointments.push(appointment);
     return HttpResponse.json(appointment, { status: 201 });
   }),
@@ -277,14 +330,40 @@ export const handlers = [
     return HttpResponse.json(appointment);
   }),
 
+  http.get(`${API}/appointments/:id`, ({ params }) =>
+    HttpResponse.json(findAppointment(params.id)),
+  ),
+
+  http.post(`${API}/appointments/:id/consultation/join`, ({ params }) => {
+    const appointment = findAppointment(params.id);
+    if (appointment.status === "scheduled") {
+      return HttpResponse.json({ status: "scheduled", waiting: true, ice_servers: [] });
+    }
+    if (appointment.status !== "in_progress")
+      return fail(409, "CALL_CLOSED", "This consultation is over.");
+    return HttpResponse.json({
+      status: "in_progress",
+      waiting: false,
+      ice_servers: [{ urls: "stun:stun.example.com:3478" }],
+    });
+  }),
+
   http.post(`${API}/appointments/:id/consultation/start`, ({ params }) => {
     findAppointment(params.id).status = "in_progress";
-    return HttpResponse.json({ id: "1", appointment_id: params.id, started_at: at(0), ended_at: null }, { status: 201 });
+    return HttpResponse.json(
+      { id: "1", appointment_id: params.id, started_at: at(0), ended_at: null },
+      { status: 201 },
+    );
   }),
 
   http.post(`${API}/appointments/:id/consultation/end`, ({ params }) => {
     findAppointment(params.id).status = "completed";
-    return HttpResponse.json({ id: "1", appointment_id: params.id, started_at: at(-10), ended_at: at(0) });
+    return HttpResponse.json({
+      id: "1",
+      appointment_id: params.id,
+      started_at: at(-10),
+      ended_at: at(0),
+    });
   }),
 
   http.get(`${API}/appointments/:id/consultation/report`, ({ params }) => {
@@ -310,8 +389,11 @@ export const handlers = [
     const body = (await request.json()) as AvailabilityBlock;
     const start = `${body.start_time}:00`;
     const end = `${body.end_time}:00`;
-    const overlap = blocks.some((b) => b.day_of_week === body.day_of_week && start < b.end_time && end > b.start_time);
-    if (overlap) return fail(409, "HOURS_OVERLAP", "These hours overlap hours you already have on that day.");
+    const overlap = blocks.some(
+      (b) => b.day_of_week === body.day_of_week && start < b.end_time && end > b.start_time,
+    );
+    if (overlap)
+      return fail(409, "HOURS_OVERLAP", "These hours overlap hours you already have on that day.");
     const block = { ...body, id: newId(), start_time: start, end_time: end };
     blocks.push(block);
     return HttpResponse.json(block, { status: 201 });
@@ -383,7 +465,12 @@ export const handlers = [
     HttpResponse.json(
       reports
         .filter((r) => r.shared_with.length > 0)
-        .map((r) => ({ ...r, patient_id: "2", patient_name: "Priya Sharma", shared_at: r.shared_with[0].shared_at })),
+        .map((r) => ({
+          ...r,
+          patient_id: "2",
+          patient_name: "Priya Sharma",
+          shared_at: r.shared_with[0].shared_at,
+        })),
     ),
   ),
 

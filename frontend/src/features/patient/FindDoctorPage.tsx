@@ -1,6 +1,6 @@
 import { BadgeCheck, SearchX } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { bookAppointment } from "@/api/appointments";
 import type { ApiError } from "@/api/client";
@@ -28,7 +28,8 @@ const SPECIALITY_OPTIONS = [{ value: "", label: "All specialities" }, ...SPECIAL
 export default function FindDoctorPage() {
   const [query, setQuery] = useState("");
   const [specialization, setSpecialization] = useState("");
-  const [doctorId, setDoctorId] = useState("");
+  const [params] = useSearchParams();
+  const [doctorId, setDoctorId] = useState(params.get("doctor") ?? "");
   const q = useDebounced(query, 300);
   const { data, error, reload } = useApi<Paginated<DoctorCard>>("/doctors", { q, specialization, page_size: 50 });
   const doctor = data?.items.find((d) => d.id === doctorId) ?? data?.items[0];

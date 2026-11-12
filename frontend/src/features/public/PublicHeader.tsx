@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { firstName } from "@/lib/format";
 import { HOME_PATH, PORTAL_LABEL } from "@/lib/roles";
+import { bookPath } from "./content";
 
 const LINKS = [
   { href: "#doctors", label: "Find a doctor" },
@@ -57,9 +58,11 @@ export function PublicHeader() {
               </Link>
             </>
           )}
-          <a href="#doctors" className={buttonClass("primary", "sm")}>
-            Book a consultation
-          </a>
+          {(!user || user.role === "patient") && (
+            <Link to={bookPath()} className={buttonClass("primary", "sm")}>
+              Book a consultation
+            </Link>
+          )}
         </div>
       </div>
     </header>

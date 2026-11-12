@@ -7,6 +7,7 @@ import { resetData, server } from "./server";
 configure({ asyncUtilTimeout: 10000 });
 
 window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
+Element.prototype.scrollIntoView ??= vi.fn();
 window.matchMedia ??= ((query: string) => ({
   matches: false,
   media: query,

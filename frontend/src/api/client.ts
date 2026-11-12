@@ -20,7 +20,11 @@ export class ApiError extends Error {
 export function toApiError(err: unknown): ApiError {
   if (err instanceof ApiError) return err;
   if (err instanceof AxiosError) {
-    if (!err.response) return new ApiError("NETWORK_ERROR", "We couldn't reach the server. Check your connection and try again.");
+    if (!err.response)
+      return new ApiError(
+        "NETWORK_ERROR",
+        "We couldn't reach the server. Check your connection and try again.",
+      );
     const body = err.response.data as Partial<ApiErrorBody> | undefined;
     return new ApiError(
       body?.error?.code ?? `HTTP_${err.response.status}`,
@@ -29,13 +33,20 @@ export function toApiError(err: unknown): ApiError {
       body?.error?.request_id,
     );
   }
-  return new ApiError("UNKNOWN", err instanceof Error ? err.message : "Something unexpected happened.");
+  return new ApiError(
+    "UNKNOWN",
+    err instanceof Error ? err.message : "Something unexpected happened.",
+  );
 }
 
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
   accessToken = token;
+}
+
+export function getAccessToken() {
+  return accessToken;
 }
 
 api.interceptors.request.use((config) => {

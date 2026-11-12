@@ -1,8 +1,12 @@
 import { api } from "./client";
-import type { Appointment, ConsultationReport, ConsultationReportInput } from "./types";
+import type { Appointment, CallInfo, ConsultationReport, ConsultationReportInput } from "./types";
 
 export async function bookAppointment(doctorId: string, startTime: string, reason: string | null) {
-  const res = await api.post<Appointment>("/appointments", { doctor_id: Number(doctorId), start_time: startTime, reason });
+  const res = await api.post<Appointment>("/appointments", {
+    doctor_id: Number(doctorId),
+    start_time: startTime,
+    reason,
+  });
   return res.data;
 }
 
@@ -26,5 +30,10 @@ export async function endConsultation(id: string) {
 
 export async function saveConsultationReport(id: string, input: ConsultationReportInput) {
   const res = await api.put<ConsultationReport>(`/appointments/${id}/consultation/report`, input);
+  return res.data;
+}
+
+export async function joinCall(id: string) {
+  const res = await api.post<CallInfo>(`/appointments/${id}/consultation/join`);
   return res.data;
 }

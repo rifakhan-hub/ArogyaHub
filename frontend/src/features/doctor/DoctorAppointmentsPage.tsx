@@ -1,18 +1,19 @@
-import { CalendarX } from "lucide-react";
+import { CalendarX, Video } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
-import { cancelAppointment, endConsultation, markNoShow, startConsultation } from "@/api/appointments";
+import { cancelAppointment, markNoShow } from "@/api/appointments";
 import type { ApiError } from "@/api/client";
 import type { Appointment } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { AppointmentBadge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Spinner } from "@/components/ui/Spinner";
-import { byStart, canStart, isUpcoming } from "@/features/portal/appointments";
+import { byStart, canJoin, consultationPath, isUpcoming } from "@/features/portal/appointments";
 import { STATUS_BORDER } from "@/features/portal/status";
 import { refreshData, useApi } from "@/hooks/useApi";
 import { cn } from "@/lib/cn";
@@ -44,23 +45,17 @@ export default function DoctorAppointmentsPage() {
     const started = new Date(a.start_time) <= now;
     return (
       <>
-        {canStart(a, now) && (
-          <Button size="sm" onClick={() => attempt(() => startConsultation(a.id), `Started with ${a.patient_name}`)}>
-            Start consultation
-          </Button>
-        )}
-        {a.status === "in_progress" && (
-          <>
-            <Button variant="outline" size="sm" onClick={() => setWriting(a)}>
-              Write report
-            </Button>
-            <Button size="sm" onClick={() => attempt(() => endConsultation(a.id), `Ended with ${a.patient_name}`)}>
-              End consultation
-            </Button>
-          </>
+        {(a.status === "in_progress" || canJoin(a, now)) && (
+          <Link to={consultationPath("doctor", a.id)} className={buttonClass("primary", "sm")}>
+            <Video aria-hidden /> {a.status === "in_progress" ? "Rejoin call" : "Open consultation"}
+          </Link>
         )}
         {a.status === "scheduled" && started && (
-          <Button variant="outline" size="sm" onClick={() => attempt(() => markNoShow(a.id), `${a.patient_name}: no-show`)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => attempt(() => markNoShow(a.id), `${a.patient_name}: no-show`)}
+          >
             No-show
           </Button>
         )}
@@ -68,7 +63,9 @@ export default function DoctorAppointmentsPage() {
           <Button
             variant="danger-outline"
             size="sm"
-            onClick={() => attempt(() => cancelAppointment(a.id), `Cancelled ${a.patient_name}'s consultation`)}
+            onClick={() =>
+              attempt(() => cancelAppointment(a.id), `Cancelled ${a.patient_name}'s consultation`)
+            }
           >
             Cancel
           </Button>
@@ -82,7 +79,7 @@ export default function DoctorAppointmentsPage() {
       <title>Appointments · Doctor portal</title>
       <PageHeader
         title="Appointments"
-        description="Start a consultation from 10 minutes before its time, then write the report."
+        description="Open a consultation from 10 minutes before its time to start the video call and write the notes."
       />
 
       <section className="flex flex-col gap-3">
@@ -110,7 +107,7 @@ export default function DoctorAppointmentsPage() {
                 Report
               </Button>
             )}
-            {a.status === "scheduled" && actions(a)}
+            {(a.status === "scheduled" || a.status === "in_progress") && actions(a)}
           </AppointmentRow>
         ))}
       </section>
@@ -120,10 +117,19 @@ export default function DoctorAppointmentsPage() {
   );
 }
 
-function AppointmentRow({ appointment, children }: { appointment: Appointment; children?: React.ReactNode }) {
+function AppointmentRow({
+  appointment,
+  children,
+}: {
+  appointment: Appointment;
+  children?: React.ReactNode;
+}) {
   return (
     <Card
-      className={cn("flex flex-wrap items-center justify-between gap-4 border-l-4 p-4", STATUS_BORDER[appointment.status])}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-4 border-l-4 p-4",
+        STATUS_BORDER[appointment.status],
+      )}
     >
       <div className="flex items-center gap-3">
         <Avatar name={appointment.patient_name} />

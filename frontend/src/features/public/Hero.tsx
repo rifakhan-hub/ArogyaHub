@@ -1,9 +1,10 @@
 import { Bot, Clock, Lock, Search, ShieldCheck } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
-import { DOCTORS, SPECIALITIES } from "./content";
+import type { DoctorCard } from "@/api/types";
+import { SPECIALITIES } from "@/features/doctor/profileForm";
+import { nextSlotText } from "./content";
 
 interface HeroProps {
   query: string;
@@ -11,6 +12,7 @@ interface HeroProps {
   speciality: string;
   onSpecialityChange: (value: string) => void;
   onSearch: () => void;
+  doctors: DoctorCard[] | undefined;
 }
 
 export function Hero({
@@ -19,8 +21,12 @@ export function Hero({
   speciality,
   onSpecialityChange,
   onSearch,
+  doctors,
 }: HeroProps) {
-  const availableNow = DOCTORS.slice(0, 3);
+  const soonest = (doctors ?? [])
+    .filter((d) => d.next_slot)
+    .sort((a, b) => (a.next_slot ?? "").localeCompare(b.next_slot ?? ""))
+    .slice(0, 3);
 
   return (
     <section className="border-border bg-surface border-b">
@@ -120,26 +126,34 @@ export function Hero({
 
         <div className="animate-rise" style={{ animationDelay: "300ms" }}>
           <Card className="animate-float shadow-2 p-6">
-            <h2 className="text-h4 text-text">Available in the next hour</h2>
-            <ul className="divide-border mt-4 flex flex-col divide-y">
-              {availableNow.map((doctor) => (
-                <li key={doctor.name} className="flex items-center gap-3 py-3">
-                  <Avatar name={doctor.name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-body text-text truncate font-semibold">{doctor.name}</p>
-                    <p className="text-small text-muted">{doctor.speciality}</p>
-                  </div>
-                  {doctor.liveNow ? (
-                    <Badge tone="success">Online now</Badge>
-                  ) : (
-                    <span className="text-small text-muted flex items-center gap-1">
-                      <Clock className="size-4" aria-hidden />
-                      {doctor.nextSlot}
+            <h2 className="text-h4 text-text">Next available doctors</h2>
+            {!doctors ? (
+              <ul aria-label="Loading doctors" className="mt-4 flex flex-col gap-3">
+                {[1, 2, 3].map((n) => (
+                  <li key={n} className="bg-surface-muted h-12 animate-pulse rounded-md" />
+                ))}
+              </ul>
+            ) : soonest.length === 0 ? (
+              <p className="text-small text-muted mt-4">
+                No free slots this week. Check back soon.
+              </p>
+            ) : (
+              <ul className="divide-border mt-4 flex flex-col divide-y">
+                {soonest.map((doctor) => (
+                  <li key={doctor.id} className="flex items-center gap-3 py-3">
+                    <Avatar name={doctor.name} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body text-text truncate font-semibold">{doctor.name}</p>
+                      <p className="text-small text-muted">{doctor.specialization}</p>
+                    </div>
+                    <span className="text-small text-muted flex items-center gap-1 text-right">
+                      <Clock className="size-4 shrink-0" aria-hidden />
+                      {nextSlotText(doctor.next_slot)}
                     </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
             <a
               href="#doctors"
               className="text-small text-primary mt-4 block font-semibold hover:underline"

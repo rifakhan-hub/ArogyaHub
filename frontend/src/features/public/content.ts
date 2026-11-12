@@ -1,83 +1,24 @@
-export const SPECIALITIES = ["General Physician", "Paediatrics", "Dermatology", "Gynaecology", "ENT", "Psychiatry"];
+import { formatRelativeDay, formatTime } from "@/lib/dates";
 
 export const SYMPTOM_WORDS: Record<string, string[]> = {
-  "General Physician": ["fever", "cold", "cough", "headache", "bp", "sugar", "diabetes", "body pain", "weakness", "general"],
+  "General Physician": [
+    "fever",
+    "cold",
+    "cough",
+    "headache",
+    "bp",
+    "sugar",
+    "diabetes",
+    "body pain",
+    "weakness",
+    "general",
+  ],
   Paediatrics: ["child", "baby", "kid", "infant", "vaccination", "children"],
   Dermatology: ["skin", "rash", "acne", "pimple", "hair", "itch", "allergy"],
   Gynaecology: ["period", "pregnancy", "pcos", "women", "pregnant"],
   ENT: ["ear", "nose", "throat", "sinus", "tonsil"],
   Psychiatry: ["anxiety", "stress", "sleep", "depression", "mood"],
 };
-
-export interface SampleDoctor {
-  name: string;
-  speciality: string;
-  council: string;
-  experience: number;
-  fee: number;
-  nextSlot: string;
-  slotMinutes: number;
-  liveNow?: boolean;
-}
-
-export const DOCTORS: SampleDoctor[] = [
-  {
-    name: "Dr. Simran Kaur",
-    speciality: "General Physician",
-    council: "PMC",
-    experience: 11,
-    fee: 400,
-    nextSlot: "10:30",
-    slotMinutes: 15,
-    liveNow: true,
-  },
-  {
-    name: "Dr. Arjun Mehta",
-    speciality: "Paediatrics",
-    council: "DMC",
-    experience: 8,
-    fee: 500,
-    nextSlot: "10:45",
-    slotMinutes: 20,
-  },
-  {
-    name: "Dr. Farah Khan",
-    speciality: "Dermatology",
-    council: "MMC",
-    experience: 14,
-    fee: 600,
-    nextSlot: "11:00",
-    slotMinutes: 10,
-    liveNow: true,
-  },
-  {
-    name: "Dr. Kavya Iyer",
-    speciality: "Gynaecology",
-    council: "KMC",
-    experience: 12,
-    fee: 700,
-    nextSlot: "11:15",
-    slotMinutes: 20,
-  },
-  {
-    name: "Dr. Rohan Das",
-    speciality: "ENT",
-    council: "WBMC",
-    experience: 9,
-    fee: 450,
-    nextSlot: "11:30",
-    slotMinutes: 15,
-  },
-  {
-    name: "Dr. Meera Nair",
-    speciality: "Psychiatry",
-    council: "TCMC",
-    experience: 16,
-    fee: 800,
-    nextSlot: "12:00",
-    slotMinutes: 30,
-  },
-];
 
 export const STEPS = [
   {
@@ -95,10 +36,26 @@ export const STEPS = [
 ];
 
 export const FACTS = [
-  { value: 100, suffix: "%", label: "of doctors licence-checked with their medical council before they can take bookings" },
-  { value: 30, suffix: " min", label: "longest slot a doctor can offer; the shortest is 5 minutes" },
-  { value: 24, suffix: "/7", label: "help from the AI assistant with booking, reports and payments" },
-  { value: 5, suffix: " min", label: "lifetime of each secure link to your reports, so files never sit open" },
+  {
+    value: 100,
+    suffix: "%",
+    label: "of doctors licence-checked with their medical council before they can take bookings",
+  },
+  {
+    value: 30,
+    suffix: " min",
+    label: "longest slot a doctor can offer; the shortest is 5 minutes",
+  },
+  {
+    value: 24,
+    suffix: "/7",
+    label: "help from the AI assistant with booking, reports and payments",
+  },
+  {
+    value: 5,
+    suffix: " min",
+    label: "lifetime of each secure link to your reports, so files never sit open",
+  },
 ];
 
 export const FAQS = [
@@ -109,7 +66,8 @@ export const FAQS = [
   },
   {
     question: "Do I need to install anything?",
-    answer: "No. Consultations run in your web browser on any laptop or computer. You only need a camera, a microphone and a steady connection.",
+    answer:
+      "No. Consultations run in your web browser on any laptop or computer. You only need a camera, a microphone and a steady connection.",
   },
   {
     question: "Who can see my reports and scans?",
@@ -122,3 +80,23 @@ export const FAQS = [
       "No. The assistant answers questions about using AarogyaHub and gives general health information reviewed by doctors. It never diagnoses or suggests doses.",
   },
 ];
+
+export function doctorFilters(query: string, speciality: string) {
+  if (speciality) return { specialization: speciality };
+  const words = query.trim().toLowerCase();
+  if (!words) return {};
+  const match = Object.entries(SYMPTOM_WORDS).find(([, keywords]) =>
+    keywords.some((keyword) => keyword.includes(words) || words.includes(keyword)),
+  );
+  return match ? { specialization: match[0] } : { q: words };
+}
+
+export function bookPath(doctorId?: string) {
+  return doctorId ? `/patient/doctors?doctor=${doctorId}` : "/patient/doctors";
+}
+
+export function nextSlotText(nextSlot: string | null) {
+  return nextSlot
+    ? `${formatRelativeDay(nextSlot)}, ${formatTime(nextSlot)}`
+    : "No free slots this week";
+}

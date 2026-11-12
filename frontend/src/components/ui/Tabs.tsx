@@ -15,7 +15,11 @@ interface TabsProps {
 
 export function Tabs({ tabs, value, onChange, label }: TabsProps) {
   return (
-    <div role="tablist" aria-label={label} className="flex items-center gap-1 overflow-x-auto border-b border-border">
+    <div
+      role="tablist"
+      aria-label={label}
+      className="border-border flex items-center gap-1 overflow-x-auto overflow-y-hidden border-b"
+    >
       {tabs.map((tab) => (
         <button
           key={tab.value}
@@ -24,13 +28,13 @@ export function Tabs({ tabs, value, onChange, label }: TabsProps) {
           aria-selected={tab.value === value}
           onClick={() => onChange(tab.value)}
           className={cn(
-            "-mb-px inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-small font-medium transition-colors hover:text-text",
-            tab.value === value ? "border-primary text-text" : "border-transparent text-muted",
+            "text-small hover:text-text -mb-px inline-flex h-11 shrink-0 items-center gap-2 border-b-2 px-3 font-medium transition-colors",
+            tab.value === value ? "border-primary text-text" : "text-muted border-transparent",
           )}
         >
           {tab.label}
           {tab.count !== undefined && (
-            <span className="rounded-full bg-surface-muted px-1.5 text-caption font-semibold text-muted tabular">
+            <span className="bg-surface-muted text-caption text-muted tabular rounded-full px-1.5 font-semibold">
               {tab.count}
             </span>
           )}

@@ -1,10 +1,14 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { todayIST } from "@/lib/dates";
 import { renderApp, signInAs } from "./render";
 import { appointments, blocks, consultationReports, documents, reports, server } from "./server";
+import { FakePeer, FakeSocket, installFakeWebRTC, removeFakeWebRTC } from "./webrtc";
+
+beforeEach(installFakeWebRTC);
+afterEach(removeFakeWebRTC);
 
 describe("patient portal", () => {
   it("shows the next consultation and the report count", async () => {
@@ -39,7 +43,11 @@ describe("patient portal", () => {
 
     expect(await screen.findByRole("heading", { name: "My appointments" })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/patient/appointments");
-    expect(sent).toEqual({ doctor_id: 10, start_time: `${todayIST()}T04:00:00Z`, reason: "Itchy skin" });
+    expect(sent).toEqual({
+      doctor_id: 10,
+      start_time: `${todayIST()}T04:00:00Z`,
+      reason: "Itchy skin",
+    });
   });
 
   it("cancels an upcoming appointment", async () => {
@@ -71,6 +79,49 @@ describe("patient portal", () => {
     );
   });
 
+  it("waits for the doctor, then joins the video call", async () => {
+    signInAs("patient");
+    const appointment = appointments.find((a) => a.id === "20")!;
+    appointment.start_time = new Date(Date.now() - 5 * 60_000).toISOString();
+    appointment.end_time = new Date(Date.now() + 25 * 60_000).toISOString();
+    const user = userEvent.setup();
+    const { router } = renderApp("/patient/appointments");
+
+    await user.click(await screen.findByRole("link", { name: /Join call/ }));
+    expect(await screen.findByText("Waiting for Dr. Anjali Mehta")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/patient/consultation/20");
+    expect(FakeSocket.sockets).toHaveLength(0);
+
+    appointment.status = "in_progress";
+    await waitFor(() => expect(FakeSocket.sockets).toHaveLength(1), { timeout: 8000 });
+    const socket = FakeSocket.sockets[0];
+    await waitFor(() => expect(socket.sent).toEqual([{ type: "auth", token: "token-2" }]));
+
+    socket.receive({ type: "ready", peer: true });
+    expect(await screen.findByText("Connecting to Dr. Anjali Mehta…")).toBeInTheDocument();
+    socket.receive({ type: "offer", sdp: { type: "offer", sdp: "fake-offer" } });
+    await waitFor(() =>
+      expect(socket.sent.at(-1)).toEqual({
+        type: "answer",
+        sdp: { type: "answer", sdp: "fake-answer" },
+      }),
+    );
+
+    socket.receive({ type: "hangup" });
+    expect(await screen.findByText("The call has ended.")).toBeInTheDocument();
+  });
+
+  it("shows the notes and prescription after the call", async () => {
+    signInAs("patient");
+    renderApp("/patient/consultation/22");
+
+    expect(await screen.findByText("This consultation has ended")).toBeInTheDocument();
+    const notes = screen.getByRole("complementary", { name: "Notes and prescription" });
+    expect(await within(notes).findByText("Contact dermatitis")).toBeInTheDocument();
+    expect(within(notes).getByRole("row", { name: /Cetirizine/ })).toBeInTheDocument();
+    expect(within(notes).getByRole("link", { name: "Print prescription" })).toBeInTheDocument();
+  });
+
   it("shows a printable prescription", async () => {
     signInAs("patient");
     renderApp("/patient/prescription/22");
@@ -89,14 +140,24 @@ describe("patient portal", () => {
     renderApp("/patient/reports");
 
     await screen.findByRole("heading", { name: "Reports" });
-    await user.upload(screen.getByLabelText(/upload report/i), new File(["%PDF"], "Lipid profile.pdf", { type: "application/pdf" }));
+    await user.upload(
+      screen.getByLabelText(/upload report/i),
+      new File(["%PDF"], "Lipid profile.pdf", { type: "application/pdf" }),
+    );
     const row = (await screen.findByText("Lipid profile")).closest("li")!;
     expect(reports[0].title).toBe("Lipid profile");
 
-    await user.selectOptions(within(row).getByLabelText("Share Lipid profile with"), "Dr. Anjali Mehta");
-    expect(await within(row).findByRole("button", { name: "Stop sharing with Dr. Anjali Mehta" })).toBeInTheDocument();
+    await user.selectOptions(
+      within(row).getByLabelText("Share Lipid profile with"),
+      "Dr. Anjali Mehta",
+    );
+    expect(
+      await within(row).findByRole("button", { name: "Stop sharing with Dr. Anjali Mehta" }),
+    ).toBeInTheDocument();
 
-    await user.click(within(row).getByRole("button", { name: "Stop sharing with Dr. Anjali Mehta" }));
+    await user.click(
+      within(row).getByRole("button", { name: "Stop sharing with Dr. Anjali Mehta" }),
+    );
     expect(await within(row).findByText("nobody")).toBeInTheDocument();
 
     await user.click(within(row).getByRole("button", { name: "Delete Lipid profile" }));
@@ -108,13 +169,11 @@ describe("patient portal", () => {
     signInAs("patient");
     renderApp("/patient");
     const nav = await screen.findByRole("navigation", { name: "Patient portal" });
-    expect(within(nav).getAllByRole("link").map((l) => l.textContent)).toEqual([
-      "Home",
-      "Appointments",
-      "Reports",
-      "Find a doctor",
-      "Profile",
-    ]);
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((l) => l.textContent),
+    ).toEqual(["Home", "Appointments", "Reports", "Find a doctor", "Profile"]);
   });
 
   it("shows and edits the patient's own profile", async () => {
@@ -150,15 +209,49 @@ describe("doctor portal", () => {
     expect(screen.getAllByText("Rahul Verma").length).toBeGreaterThan(0);
   });
 
-  it("starts a consultation, writes the report and ends it", async () => {
+  it("runs the video consultation, writes the notes and ends it", async () => {
     signInAs("doctor");
     const user = userEvent.setup();
-    renderApp("/doctor/appointments");
+    const { router } = renderApp("/doctor/appointments");
 
-    await user.click(await screen.findByRole("button", { name: "Start consultation" }));
-    await user.click(await screen.findByRole("button", { name: "Write report" }));
+    await user.click(await screen.findByRole("link", { name: /Open consultation/ }));
+    expect(
+      await screen.findByText("You can write notes once the consultation starts."),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/doctor/consultation/21");
 
-    const dialog = await screen.findByRole("dialog", { name: "Consultation report" });
+    await user.click(screen.getByRole("button", { name: "Start consultation" }));
+    await waitFor(() => expect(FakeSocket.sockets).toHaveLength(1));
+    const socket = FakeSocket.sockets[0];
+    expect(socket.url).toBe(`ws://${location.host}/api/v1/appointments/21/consultation/signal`);
+    await waitFor(() => expect(socket.sent).toEqual([{ type: "auth", token: "token-4" }]));
+
+    socket.receive({ type: "ready", peer: false });
+    expect(
+      await screen.findByText("Waiting for Rahul Verma to join the call…"),
+    ).toBeInTheDocument();
+
+    socket.receive({ type: "peer-joined" });
+    await waitFor(() =>
+      expect(socket.sent.at(-1)).toEqual({
+        type: "offer",
+        sdp: { type: "offer", sdp: "fake-offer" },
+      }),
+    );
+    expect(FakePeer.peers[0].config).toEqual({
+      iceServers: [{ urls: "stun:stun.example.com:3478" }],
+    });
+    socket.receive({ type: "answer", sdp: { type: "answer", sdp: "fake-answer" } });
+    socket.receive({ type: "ice", candidate: { candidate: "candidate:1" } });
+    await waitFor(() => expect(FakePeer.peers[0].candidates).toHaveLength(1));
+    expect(FakePeer.peers[0].remoteDescription).toEqual({ type: "answer", sdp: "fake-answer" });
+    FakePeer.peers[0].connect();
+    expect(await screen.findByLabelText("Rahul Verma")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Mute microphone" }));
+    expect(screen.getByRole("button", { name: "Unmute microphone" })).toBeInTheDocument();
+
+    const dialog = screen.getByRole("complementary", { name: "Notes and prescription" });
     await user.type(await within(dialog).findByLabelText("Diagnosis"), "Viral fever");
     await user.type(within(dialog).getByLabelText("Name"), "Paracetamol");
     await user.click(within(dialog).getByRole("button", { name: "Save report" }));
@@ -176,8 +269,26 @@ describe("doctor portal", () => {
     ]);
 
     await user.click(screen.getByRole("button", { name: "End consultation" }));
-    expect(await screen.findByText("Ended with Rahul Verma")).toBeInTheDocument();
+    expect(await screen.findByText("This consultation has ended")).toBeInTheDocument();
+    expect(socket.sent.at(-1)).toEqual({ type: "hangup" });
+    expect(socket.readyState).toBe(3);
     expect(appointments.find((a) => a.id === "21")?.status).toBe("completed");
+  });
+
+  it("opens a shared report from the call", async () => {
+    signInAs("doctor");
+    const appointment = appointments.find((a) => a.id === "21")!;
+    Object.assign(appointment, {
+      status: "in_progress",
+      patient_id: "2",
+      patient_name: "Priya Sharma",
+    });
+    const user = userEvent.setup();
+    renderApp("/doctor/consultation/21");
+
+    await user.click(await screen.findByRole("tab", { name: /Shared reports/ }));
+    expect(screen.getByText(reports[0].title)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open" })).toBeInTheDocument();
   });
 
   it("adds and removes weekly hours on the calendar", async () => {
@@ -190,7 +301,9 @@ describe("doctor portal", () => {
     expect(screen.getByText("You don't work on Sundays yet.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Add hours" }));
-    expect(await screen.findByRole("button", { name: "Remove Sunday 09:00–12:00" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Remove Sunday 09:00–12:00" }),
+    ).toBeInTheDocument();
     expect(blocks.some((b) => b.day_of_week === 6)).toBe(true);
 
     await user.click(screen.getByRole("button", { name: "Add hours" }));
@@ -226,7 +339,10 @@ describe("doctor portal", () => {
     renderApp("/doctor/profile");
 
     await screen.findByRole("heading", { name: "Documents" });
-    await user.upload(screen.getByLabelText(/upload file/i), new File(["%PDF"], "licence.pdf", { type: "application/pdf" }));
+    await user.upload(
+      screen.getByLabelText(/upload file/i),
+      new File(["%PDF"], "licence.pdf", { type: "application/pdf" }),
+    );
     expect(await screen.findByText(/licence\.pdf/)).toBeInTheDocument();
     expect(documents[0].doc_type).toBe("licence");
   });

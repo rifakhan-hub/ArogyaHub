@@ -49,7 +49,10 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, lazy: page(() => import("@/features/patient/PatientHomePage")) },
           { path: "doctors", lazy: page(() => import("@/features/patient/FindDoctorPage")) },
-          { path: "appointments", lazy: page(() => import("@/features/patient/PatientAppointmentsPage")) },
+          {
+            path: "appointments",
+            lazy: page(() => import("@/features/patient/PatientAppointmentsPage")),
+          },
           { path: "reports", lazy: page(() => import("@/features/patient/ReportsPage")) },
           { path: "profile", lazy: page(() => import("@/features/patient/PatientProfilePage")) },
           { path: "*", element: <NotFound /> },
@@ -64,11 +67,28 @@ export const routes: RouteObject[] = [
         ),
         children: [
           { index: true, lazy: page(() => import("@/features/doctor/DoctorHomePage")) },
-          { path: "appointments", lazy: page(() => import("@/features/doctor/DoctorAppointmentsPage")) },
+          {
+            path: "appointments",
+            lazy: page(() => import("@/features/doctor/DoctorAppointmentsPage")),
+          },
           { path: "schedule", lazy: page(() => import("@/features/doctor/SchedulePage")) },
           { path: "reports", lazy: page(() => import("@/features/doctor/SharedReportsPage")) },
           { path: "profile", lazy: page(() => import("@/features/doctor/DoctorProfilePage")) },
           { path: "*", element: <NotFound /> },
+        ],
+      },
+      {
+        path: "/patient/consultation/:id",
+        element: <RequireRole allow="patient" />,
+        children: [
+          { index: true, lazy: page(() => import("@/features/consultation/ConsultationPage")) },
+        ],
+      },
+      {
+        path: "/doctor/consultation/:id",
+        element: <RequireRole allow="doctor" />,
+        children: [
+          { index: true, lazy: page(() => import("@/features/consultation/ConsultationPage")) },
         ],
       },
       {

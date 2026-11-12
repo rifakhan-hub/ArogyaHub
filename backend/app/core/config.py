@@ -17,5 +17,10 @@ class Settings(BaseSettings):
     UPLOAD_DIR: Path = Path(__file__).parents[2] / "uploads"
     MAX_UPLOAD_MB: int = 20
 
+    STUN_URLS: str = "stun:stun.l.google.com:19302"
+    TURN_URL: str = ""
+    TURN_USERNAME: str = ""
+    TURN_PASSWORD: str = ""
+
 
 settings = Settings()

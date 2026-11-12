@@ -46,3 +46,16 @@ def taken_slots(db: Session, doctor_id: int, day: date) -> set[datetime]:
             )
         ).all()
     )
+
+
+def next_free_slot(db: Session, doctor_id: int, now: datetime, days: int = 7) -> datetime | None:
+    blocks = db.scalars(select(Availability).where(Availability.doctor_id == doctor_id)).all()
+    today = ist_date(now)
+    for offset in range(days):
+        day = today + timedelta(days=offset)
+        if not any(b.day_of_week == day.weekday() for b in blocks):
+            continue
+        slots = free_slots(blocks, day, taken_slots(db, doctor_id, day), now)
+        if slots:
+            return slots[0][0]
+    return None
