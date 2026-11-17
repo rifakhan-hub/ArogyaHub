@@ -200,3 +200,18 @@ export interface CallInfo {
   waiting: boolean;
   ice_servers: RTCIceServer[];
 }
+
+export interface Consultation {
+  id: string;
+  appointment_id: string;
+  started_at: string;
+  ended_at: string | null;
+}
+
+export interface AppointmentDetail {
+  appointment: Appointment;
+  consultation: Consultation | null;
+  report: ConsultationReport | null;
+}
+
+export type AppointmentSummary = Record<AppointmentStatus | "total", number>;

@@ -9,7 +9,7 @@ NEW_DOCTOR = {
     "email": "Kavya.Rao@Example.com",
     "phone": "+919811113333",
     "city": "Mohali",
-    "password": "a-strong-password",
+    "password": "Strong-pass-123",
     "specialization": "Paediatrics",
     "license_number": "PMC-9090",
     "council": "Punjab Medical Council",
@@ -45,7 +45,7 @@ def test_register_doctor_creates_a_pending_profile(client):
 
 def test_pending_doctor_can_log_in_and_see_their_status(client):
     client.post(REGISTER, json=NEW_DOCTOR)
-    token = login(client, "kavya.rao@example.com", "a-strong-password").json()["access_token"]
+    token = login(client, "kavya.rao@example.com", "Strong-pass-123").json()["access_token"]
     me = client.get("/api/v1/doctors/me", headers={"Authorization": f"Bearer {token}"})
     assert me.status_code == 200
     assert me.json()["verification_status"] == "pending"

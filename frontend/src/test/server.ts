@@ -273,6 +273,45 @@ export const handlers = [
     HttpResponse.json(patientOut(users.find((u) => u.id === params.id)!)),
   ),
 
+  http.get(`${API}/admin/appointments/summary`, () => {
+    const count = (status: string) => appointments.filter((a) => a.status === status).length;
+    return HttpResponse.json({
+      scheduled: count("scheduled"),
+      in_progress: count("in_progress"),
+      completed: count("completed"),
+      cancelled: count("cancelled"),
+      no_show: count("no_show"),
+      total: appointments.length,
+    });
+  }),
+
+  http.get(`${API}/admin/appointments`, ({ request }) => {
+    const search = new URL(request.url).searchParams;
+    const q = (search.get("q") ?? "").toLowerCase();
+    const status = search.get("status");
+    const listed = appointments.filter(
+      (a) =>
+        (!status || a.status === status) &&
+        `${a.patient_name} ${a.doctor_name}`.toLowerCase().includes(q),
+    );
+    return HttpResponse.json(page(listed));
+  }),
+
+  http.get(`${API}/admin/appointments/:id`, ({ params }) => {
+    const appointment = findAppointment(params.id);
+    const report = consultationReports[appointment.id] ?? null;
+    const consultation =
+      appointment.status === "completed" || appointment.status === "in_progress"
+        ? {
+            id: "1",
+            appointment_id: appointment.id,
+            started_at: appointment.start_time,
+            ended_at: appointment.status === "completed" ? appointment.end_time : null,
+          }
+        : null;
+    return HttpResponse.json({ appointment, consultation, report });
+  }),
+
   http.get(`${API}/admin/patients`, () =>
     HttpResponse.json(page(users.filter((u) => u.role === "patient"))),
   ),

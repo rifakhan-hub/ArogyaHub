@@ -1,85 +1,36 @@
-import { AlertCircle, CheckCircle2, Eye, EyeOff, UserPlus } from "lucide-react";
+import { AlertCircle, CheckCircle2, Stethoscope, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
-import { register } from "@/api/auth";
-import { ApiError } from "@/api/client";
-import type { User } from "@/api/types";
+import { register, registerDoctor } from "@/api/auth";
+import type { ApiError } from "@/api/client";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Field } from "@/components/ui/Field";
-import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
-import { isEmail } from "@/lib/validators";
-
-interface Form {
-  name: string;
-  email: string;
-  phone: string;
-  city: string;
-  password: string;
-  confirm: string;
-}
-
-type Errors = Partial<Record<keyof Form, string>>;
-
-const EMPTY: Form = { name: "", email: "", phone: "", city: "", password: "", confirm: "" };
-
-function validate(form: Form): Errors {
-  const errors: Errors = {};
-  if (form.name.trim().length < 2) errors.name = "Enter your full name";
-  if (!isEmail(form.email)) errors.email = "Enter an email address, like name@example.com";
-  if (form.phone.trim() && !/^\+?[0-9]{10,15}$/.test(form.phone.trim()))
-    errors.phone = "Use 10 to 15 digits, with an optional + at the start";
-  if (form.password.length < 8) errors.password = "Use at least 8 characters";
-  else if (form.confirm !== form.password) errors.confirm = "The passwords don't match";
-  return errors;
-}
+import {
+  AboutFields,
+  EMPTY_PROFILE,
+  ProfessionalFields,
+  type ProfileErrors,
+  type ProfileForm,
+  toProfileInput,
+  validateAbout,
+  validateProfessional,
+} from "@/features/doctor/profileForm";
+import {
+  type AccountErrors,
+  AccountFields,
+  EMPTY_ACCOUNT,
+  toAccountInput,
+  validateAccount,
+} from "./accountFields";
 
 export default function RegisterPage() {
-  const [form, setForm] = useState<Form>(EMPTY);
-  const [errors, setErrors] = useState<Errors>({});
-  const [serverError, setServerError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState<User | null>(null);
-
-  function update<K extends keyof Form>(key: K, value: Form[K]) {
-    setForm((f) => ({ ...f, [key]: value }));
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const newErrors = validate(form);
-    setErrors(newErrors);
-    setServerError("");
-    if (Object.keys(newErrors).length > 0) return;
-
-    setSubmitting(true);
-    try {
-      const user = await register({
-        name: form.name.trim(),
-        email: form.email.trim(),
-        phone: form.phone.trim() || null,
-        city: form.city.trim() || null,
-        password: form.password,
-      });
-      setCreated(user);
-    } catch (err) {
-      const error = err as ApiError;
-      if (error.code === "EMAIL_TAKEN") setErrors({ email: error.message });
-      else if (error.code === "PHONE_TAKEN") setErrors({ phone: error.message });
-      else setServerError(error.message);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
-    <div className="min-h-dvh bg-bg text-text">
+    <div className="bg-bg text-text min-h-dvh">
       <title>Create an account · AarogyaHub</title>
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-8">
+      <header className="border-border bg-surface border-b">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
           <Link to="/" aria-label="AarogyaHub home">
             <Logo onDark={false} subtitle="Online doctor consultations" />
           </Link>
@@ -87,124 +38,233 @@ export default function RegisterPage() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-lg px-4 py-12">
-        <Card className="p-8">
-          {created ? (
-            <div className="flex flex-col items-start gap-4" role="status">
-              <span className="flex size-12 items-center justify-center rounded-lg bg-success-soft text-success">
-                <CheckCircle2 className="size-6" strokeWidth={1.75} aria-hidden />
-              </span>
-              <h1 className="text-h2">Account created</h1>
-              <p className="text-body text-muted">
-                Welcome to AarogyaHub, {created.name}. Your patient account for {created.email} is ready.
-              </p>
-              <div className="flex gap-3">
-                <Link to={`/login?email=${encodeURIComponent(created.email)}`} className={buttonClass("primary", "md")}>
-                  Log in
-                </Link>
-                <Link to="/" className={buttonClass("outline", "md")}>
-                  Back to home
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <>
-              <span className="mb-6 flex size-12 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                <UserPlus className="size-6" strokeWidth={1.75} aria-hidden />
-              </span>
-              <h1 className="text-h2">Create your patient account</h1>
-              <p className="mt-2 text-body text-muted">See verified doctors online, from home.</p>
+      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-8">
+        <h1 className="text-h1">Create your account</h1>
+        <p className="text-body text-muted mt-2">
+          Sign up as a patient to see doctors online, or as a doctor to start taking consultations.
+          Already have an account?{" "}
+          <Link to="/login" className="text-primary font-semibold hover:underline">
+            Log in
+          </Link>
+        </p>
 
-              <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5">
-                {serverError && (
-                  <div
-                    role="alert"
-                    className="flex items-start gap-2.5 rounded-md bg-danger-soft p-3 text-small text-sindoor-700 dark:text-sindoor-200"
-                  >
-                    <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-                    {serverError}
-                  </div>
-                )}
-
-                <Field label="Full name" id="name" error={errors.name}>
-                  <Input autoComplete="name" value={form.name} onChange={(e) => update("name", e.target.value)} />
-                </Field>
-                <Field label="Email" id="email" error={errors.email}>
-                  <Input
-                    type="email"
-                    autoComplete="email"
-                    value={form.email}
-                    onChange={(e) => update("email", e.target.value)}
-                  />
-                </Field>
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <Field label="Phone" id="phone" optional error={errors.phone}>
-                    <Input
-                      type="tel"
-                      autoComplete="tel"
-                      placeholder="+919812345678"
-                      value={form.phone}
-                      onChange={(e) => update("phone", e.target.value)}
-                    />
-                  </Field>
-                  <Field label="City" id="city" optional>
-                    <Input
-                      autoComplete="address-level2"
-                      value={form.city}
-                      onChange={(e) => update("city", e.target.value)}
-                    />
-                  </Field>
-                </div>
-                <div className="relative">
-                  <Field label="Password" id="password" hint="At least 8 characters" error={errors.password}>
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      autoComplete="new-password"
-                      className="pr-11"
-                      value={form.password}
-                      onChange={(e) => update("password", e.target.value)}
-                    />
-                  </Field>
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? "Hide password" : "Show password"}
-                    aria-pressed={showPassword}
-                    className="absolute right-1 top-[30px] inline-flex size-9 items-center justify-center rounded-md text-subtle hover:bg-surface-muted hover:text-text"
-                  >
-                    {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-                  </button>
-                </div>
-                <Field label="Confirm password" id="confirm" error={errors.confirm}>
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    value={form.confirm}
-                    onChange={(e) => update("confirm", e.target.value)}
-                  />
-                </Field>
-
-                <Button type="submit" size="lg" className="mt-1 w-full" loading={submitting}>
-                  {submitting ? "Creating account…" : "Create account"}
-                </Button>
-              </form>
-
-              <p className="mt-6 text-center text-small text-muted">
-                Are you a doctor?{" "}
-                <Link to="/register/doctor" className="font-semibold text-primary hover:underline">
-                  Join as a doctor
-                </Link>
-              </p>
-              <p className="mt-2 text-center text-small text-muted">
-                Already have an account?{" "}
-                <Link to="/login" className="font-semibold text-primary hover:underline">
-                  Log in
-                </Link>
-              </p>
-            </>
-          )}
-        </Card>
+        <div className="mt-8 grid items-start gap-6 lg:grid-cols-2">
+          <PatientForm />
+          <DoctorForm />
+        </div>
       </main>
+    </div>
+  );
+}
+
+function PatientForm() {
+  const [account, setAccount] = useState(EMPTY_ACCOUNT);
+  const [errors, setErrors] = useState<AccountErrors>({});
+  const [serverError, setServerError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const found = validateAccount(account);
+    setErrors(found);
+    setServerError("");
+    if (Object.keys(found).length > 0) return;
+
+    setSaving(true);
+    try {
+      await register(toAccountInput(account));
+      setDone(true);
+    } catch (err) {
+      const error = err as ApiError;
+      if (error.code === "EMAIL_TAKEN") setErrors({ email: error.message });
+      else if (error.code === "PHONE_TAKEN") setErrors({ phone: error.message });
+      else setServerError(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="p-6 sm:p-8">
+      <section aria-labelledby="patient-heading">
+        <CardHeading
+          id="patient-heading"
+          icon={<UserRound className="size-6" strokeWidth={1.75} aria-hidden />}
+          title="I'm a patient"
+          body="Book verified doctors and keep your reports in one place."
+        />
+        {done ? (
+          <Done
+            title="Account created"
+            body={`Welcome to AarogyaHub, ${account.name.trim()}. Your patient account is ready.`}
+            email={account.email.trim()}
+          />
+        ) : (
+          <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-5">
+            <ServerError message={serverError} />
+            <AccountFields
+              idPrefix="patient"
+              form={account}
+              errors={errors}
+              onChange={setAccount}
+            />
+            <Button type="submit" size="lg" className="w-full" loading={saving}>
+              Create account
+            </Button>
+          </form>
+        )}
+      </section>
+    </Card>
+  );
+}
+
+function DoctorForm() {
+  const [account, setAccount] = useState(EMPTY_ACCOUNT);
+  const [profile, setProfile] = useState<ProfileForm>(EMPTY_PROFILE);
+  const [accountErrors, setAccountErrors] = useState<AccountErrors>({});
+  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
+  const [confirmed, setConfirmed] = useState(false);
+  const [serverError, setServerError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const foundAccount = validateAccount(account);
+    const foundProfile = { ...validateProfessional(profile), ...validateAbout(profile) };
+    setAccountErrors(foundAccount);
+    setProfileErrors(foundProfile);
+    setServerError(confirmed ? "" : "Tick the box to confirm your details.");
+    if (Object.keys(foundAccount).length || Object.keys(foundProfile).length || !confirmed) return;
+
+    setSaving(true);
+    try {
+      await registerDoctor({ ...toAccountInput(account), ...toProfileInput(profile) });
+      setDone(true);
+    } catch (err) {
+      const error = err as ApiError;
+      if (error.code === "EMAIL_TAKEN") setAccountErrors({ email: error.message });
+      else if (error.code === "PHONE_TAKEN") setAccountErrors({ phone: error.message });
+      else if (error.code === "LICENSE_TAKEN") setProfileErrors({ license_number: error.message });
+      else setServerError(error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const setProfileField = (key: keyof ProfileForm, value: string) =>
+    setProfile((p) => ({ ...p, [key]: value }));
+
+  return (
+    <Card className="p-6 sm:p-8">
+      <section aria-labelledby="doctor-heading">
+        <CardHeading
+          id="doctor-heading"
+          icon={<Stethoscope className="size-6" strokeWidth={1.75} aria-hidden />}
+          title="I'm a doctor"
+          body="An admin checks your licence before patients can book you."
+        />
+        {done ? (
+          <Done
+            title="Profile sent for review"
+            body={`Thank you, ${account.name.trim()}. Our team will check your licence with ${profile.council.trim()}. You can log in any time to see your status.`}
+            email={account.email.trim()}
+          />
+        ) : (
+          <form onSubmit={handleSubmit} noValidate className="mt-6 flex flex-col gap-6">
+            <fieldset className="flex flex-col gap-5">
+              <legend className="text-small text-subtle mb-4 font-semibold tracking-wide uppercase">
+                Account
+              </legend>
+              <AccountFields
+                idPrefix="doctor"
+                form={account}
+                errors={accountErrors}
+                onChange={setAccount}
+              />
+            </fieldset>
+            <fieldset className="border-border flex flex-col gap-5 border-t pt-6">
+              <legend className="text-small text-subtle mb-4 font-semibold tracking-wide uppercase">
+                Professional details
+              </legend>
+              <ProfessionalFields
+                form={profile}
+                errors={profileErrors}
+                onChange={setProfileField}
+              />
+              <AboutFields form={profile} errors={profileErrors} onChange={setProfileField} />
+            </fieldset>
+            <label className="text-small flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                onChange={(e) => setConfirmed(e.target.checked)}
+                className="accent-primary mt-0.5 size-4"
+              />
+              I confirm these details are correct and my medical registration is valid.
+            </label>
+            <ServerError message={serverError} />
+            <Button type="submit" size="lg" className="w-full" loading={saving}>
+              Submit for review
+            </Button>
+          </form>
+        )}
+      </section>
+    </Card>
+  );
+}
+
+function CardHeading({
+  id,
+  icon,
+  title,
+  body,
+}: {
+  id: string;
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <span className="bg-primary-soft text-primary flex size-12 shrink-0 items-center justify-center rounded-lg">
+        {icon}
+      </span>
+      <div>
+        <h2 id={id} className="text-h3 font-semibold">
+          {title}
+        </h2>
+        <p className="text-small text-muted mt-1">{body}</p>
+      </div>
+    </div>
+  );
+}
+
+function ServerError({ message }: { message: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="bg-danger-soft text-small flex items-start gap-2 rounded-md p-3">
+      <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+      {message}
+    </p>
+  );
+}
+
+function Done({ title, body, email }: { title: string; body: string; email: string }) {
+  return (
+    <div className="mt-6 flex flex-col items-start gap-4" role="status">
+      <span className="bg-success-soft text-success flex size-12 items-center justify-center rounded-lg">
+        <CheckCircle2 className="size-6" strokeWidth={1.75} aria-hidden />
+      </span>
+      <h3 className="text-h3 font-semibold">{title}</h3>
+      <p className="text-body text-muted">{body}</p>
+      <Link
+        to={`/login?email=${encodeURIComponent(email)}`}
+        className={buttonClass("primary", "md")}
+      >
+        Log in
+      </Link>
     </div>
   );
 }

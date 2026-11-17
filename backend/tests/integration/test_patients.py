@@ -18,7 +18,7 @@ UPDATE = {
 def test_register_creates_a_patient_profile(client, session):
     client.post(
         "/api/v1/auth/register",
-        json={"name": "Aman Gill", "email": "aman@example.com", "password": "a-strong-password"},
+        json={"name": "Aman Gill", "email": "aman@example.com", "password": "Strong-pass-123"},
     )
     with session() as db:
         user = db.scalar(select(User).where(User.email == "aman@example.com"))

@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, Field, field_validator
 
 from app.models import Appointment, AppointmentStatus, Consultation, ConsultationMedicine, ConsultationReport, Patient
+from app.schemas.appointment import AppointmentOut
 from app.schemas.common import as_utc, blank_to_none
 
 
@@ -119,3 +120,9 @@ class ConsultationReportOut(ConsultationReportIn):
 def age(born: date, today: date | None = None) -> int:
     today = today or date.today()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+
+class AppointmentDetailOut(BaseModel):
+    appointment: AppointmentOut
+    consultation: ConsultationOut | None
+    report: ConsultationReportOut | None

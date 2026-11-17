@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
@@ -7,17 +7,31 @@ import { renderApp } from "./render";
 import { server } from "./server";
 
 const URL = "*/api/v1/auth/register";
+const PASSWORD = "Strong-pass-123";
+
+async function patientCard() {
+  return within(await screen.findByRole("region", { name: "I'm a patient" }));
+}
 
 async function fillForm(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(await screen.findByLabelText("Full name"), "Aman Gill");
-  await user.type(screen.getByLabelText("Email"), "aman@example.com");
-  await user.type(screen.getByLabelText(/phone/i), "+919811112222");
-  await user.type(screen.getByLabelText(/city/i), "Patiala");
-  await user.type(screen.getByLabelText("Password"), "a-strong-password");
-  await user.type(screen.getByLabelText("Confirm password"), "a-strong-password");
+  const card = await patientCard();
+  await user.type(card.getByLabelText("Full name"), "Aman Gill");
+  await user.type(card.getByLabelText("Email"), "aman@example.com");
+  await user.type(card.getByLabelText(/phone/i), "+919811112222");
+  await user.type(card.getByLabelText(/city/i), "Patiala");
+  await user.type(card.getByLabelText("Password"), PASSWORD);
+  await user.type(card.getByLabelText("Confirm password"), PASSWORD);
+  return card;
 }
 
 describe("register", () => {
+  it("shows the patient and doctor forms side by side", async () => {
+    renderApp("/register");
+    expect(await screen.findByRole("heading", { name: "Create your account" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "I'm a patient" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "I'm a doctor" })).toBeInTheDocument();
+  });
+
   it("creates an account and shows a welcome message", async () => {
     let sent: AccountInput | undefined;
     server.use(
@@ -41,18 +55,37 @@ describe("register", () => {
     const user = userEvent.setup();
     renderApp("/register");
 
-    await fillForm(user);
-    await user.click(screen.getByRole("button", { name: "Create account" }));
+    const card = await fillForm(user);
+    await user.click(card.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByRole("heading", { name: "Account created" })).toBeInTheDocument();
-    expect(screen.getByText(/welcome to aarogyahub, aman gill/i)).toBeInTheDocument();
+    expect(await card.findByRole("heading", { name: "Account created" })).toBeInTheDocument();
+    expect(card.getByText(/welcome to aarogyahub, aman gill/i)).toBeInTheDocument();
     expect(sent).toEqual({
       name: "Aman Gill",
       email: "aman@example.com",
       phone: "+919811112222",
       city: "Patiala",
-      password: "a-strong-password",
+      password: PASSWORD,
     });
+  });
+
+  it("shows how strong the password is while typing", async () => {
+    const user = userEvent.setup();
+    renderApp("/register");
+    const card = await patientCard();
+    const password = card.getByLabelText("Password");
+
+    expect(card.queryByText(/password strength/i)).not.toBeInTheDocument();
+    await user.type(password, "abc");
+    expect(card.getByText("Password strength: Too short")).toBeInTheDocument();
+    await user.type(password, "defghi");
+    expect(card.getByText("Password strength: Weak")).toBeInTheDocument();
+    await user.type(password, "1A");
+    expect(card.getByText("Password strength: Good")).toBeInTheDocument();
+    expect(card.getByText("A symbol")).toHaveTextContent("(missing)");
+    await user.type(password, "!");
+    expect(card.getByText("Password strength: Strong")).toBeInTheDocument();
+    expect(card.getByText("A symbol")).toHaveTextContent("(done)");
   });
 
   it("checks the form before sending anything", async () => {
@@ -65,14 +98,15 @@ describe("register", () => {
     );
     const user = userEvent.setup();
     renderApp("/register");
+    const card = await patientCard();
 
-    await user.type(await screen.findByLabelText("Email"), "not-an-email");
-    await user.type(screen.getByLabelText("Password"), "short");
-    await user.click(screen.getByRole("button", { name: "Create account" }));
+    await user.type(card.getByLabelText("Email"), "not-an-email");
+    await user.type(card.getByLabelText("Password"), "allsmallletters");
+    await user.click(card.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByText("Enter your full name")).toBeInTheDocument();
-    expect(screen.getByText(/enter an email address/i)).toBeInTheDocument();
-    expect(screen.getByText("Use at least 8 characters")).toBeInTheDocument();
+    expect(await card.findByText("Enter your full name")).toBeInTheDocument();
+    expect(card.getByText(/enter an email address/i)).toBeInTheDocument();
+    expect(card.getByText("Choose a stronger password")).toBeInTheDocument();
     expect(called).toBe(false);
   });
 
@@ -88,16 +122,19 @@ describe("register", () => {
     const user = userEvent.setup();
     renderApp("/register");
 
-    await fillForm(user);
-    await user.click(screen.getByRole("button", { name: "Create account" }));
+    const card = await fillForm(user);
+    await user.click(card.getByRole("button", { name: "Create account" }));
 
-    expect(await screen.findByText("An account with this email already exists.")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
+    expect(await card.findByText("An account with this email already exists.")).toBeInTheDocument();
+    expect(card.getByLabelText("Email")).toHaveAttribute("aria-invalid", "true");
   });
 
   it("is linked from the home page header", async () => {
     renderApp("/");
-    expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute("href", "/register");
+    expect(await screen.findByRole("link", { name: "Sign up" })).toHaveAttribute(
+      "href",
+      "/register",
+    );
   });
 });
 
@@ -126,7 +163,7 @@ describe("login", () => {
     const { router } = renderApp("/login");
 
     await user.type(await screen.findByLabelText("Email"), "aman@example.com");
-    await user.type(screen.getByLabelText("Password"), "a-strong-password");
+    await user.type(screen.getByLabelText("Password"), PASSWORD);
     await user.click(screen.getByRole("button", { name: "Log in" }));
 
     expect(await screen.findByRole("heading", { name: "Welcome, Aman" })).toBeInTheDocument();
@@ -144,6 +181,9 @@ describe("login", () => {
 
   it("links to the register page", async () => {
     renderApp("/login");
-    expect(await screen.findByRole("link", { name: "Create an account" })).toHaveAttribute("href", "/register");
+    expect(await screen.findByRole("link", { name: "Create an account" })).toHaveAttribute(
+      "href",
+      "/register",
+    );
   });
 });

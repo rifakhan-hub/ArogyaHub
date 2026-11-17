@@ -1,5 +1,7 @@
+import pytest
 from sqlalchemy import select
 
+from app.core.security import WEAK_PASSWORD
 from app.models import User
 from tests.conftest import login
 
@@ -11,7 +13,7 @@ NEW_USER = {
     "phone": "+919811112222",
     "city": "Patiala",
     "role": "patient",
-    "password": "a-strong-password",
+    "password": "Strong-pass-123",
 }
 
 
@@ -28,7 +30,7 @@ def test_register_creates_a_user(client):
 
 def test_registered_user_can_log_in(client):
     client.post(REGISTER, json=NEW_USER)
-    res = login(client, "aman.gill@example.com", "a-strong-password")
+    res = login(client, "aman.gill@example.com", "Strong-pass-123")
     assert res.status_code == 200
     assert res.json()["user"]["name"] == "Aman Gill"
 
@@ -70,6 +72,18 @@ def test_register_invalid_input(client):
         res = client.post(REGISTER, json={**NEW_USER, **bad})
         assert res.status_code == 422, bad
         assert res.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+@pytest.mark.parametrize("password", ["password", "passwordpassword", "PASSWORD12", "Short-1"])
+def test_register_rejects_weak_passwords(client, password):
+    res = client.post(REGISTER, json={**NEW_USER, "password": password})
+    assert res.status_code == 422
+    assert res.json()["error"] == {"code": "VALIDATION_ERROR", "message": WEAK_PASSWORD}
+
+
+@pytest.mark.parametrize("password", ["Password12", "password-12", "PASSWORD-ab"])
+def test_register_accepts_three_kinds_of_character(client, password):
+    assert client.post(REGISTER, json={**NEW_USER, "password": password}).status_code == 201
 
 
 def test_login(client):

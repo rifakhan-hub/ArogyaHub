@@ -3,7 +3,7 @@ from getpass import getpass
 
 from sqlalchemy import select
 
-from app.core.security import hash_password
+from app.core.security import WEAK_PASSWORD, hash_password, is_strong_password
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models import Admin, Role, User
@@ -11,9 +11,9 @@ from app.models import Admin, Role, User
 
 def main() -> None:
     email = input("Admin email: ").strip().lower()
-    password = getpass("Password (at least 8 characters): ")
-    if len(password) < 8:
-        sys.exit("The password must be at least 8 characters.")
+    password = getpass("Password (8+ characters, with 3 of lowercase, uppercase, numbers and symbols): ")
+    if not is_strong_password(password):
+        sys.exit(WEAK_PASSWORD)
     if getpass("Type the password again: ") != password:
         sys.exit("The passwords don't match.")
 

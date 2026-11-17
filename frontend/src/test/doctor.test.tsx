@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
@@ -8,62 +8,56 @@ import { doctors, server } from "./server";
 
 type User = ReturnType<typeof userEvent.setup>;
 
-async function fillAccount(user: User) {
-  await user.type(await screen.findByLabelText("Full name"), "Dr. Kavya Rao");
-  await user.type(screen.getByLabelText("Email"), "kavya@example.com");
-  await user.type(screen.getByLabelText("Password"), "a-strong-password");
-  await user.type(screen.getByLabelText("Confirm password"), "a-strong-password");
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+const URL = "*/api/v1/auth/register/doctor";
+const PASSWORD = "Strong-pass-123";
+
+async function doctorCard() {
+  return within(await screen.findByRole("region", { name: "I'm a doctor" }));
 }
 
-async function fillProfessional(user: User) {
-  await user.selectOptions(await screen.findByLabelText("Speciality"), "Paediatrics");
-  await user.type(screen.getByLabelText("Registration (licence) number"), "PMC-9090");
-  await user.type(screen.getByLabelText("Medical council"), "Punjab Medical Council");
-  await user.type(screen.getByLabelText("Years of experience"), "7");
-  await user.type(screen.getByLabelText("Consultation fee (₹)"), "550");
-  await user.click(screen.getByRole("button", { name: "Continue" }));
-}
-
-async function fillAbout(user: User) {
-  await user.type(await screen.findByLabelText("Qualifications"), "MBBS, DCH");
-  await user.click(screen.getByRole("button", { name: "Continue" }));
+async function fillDoctorForm(user: User) {
+  const card = await doctorCard();
+  await user.type(card.getByLabelText("Full name"), "Dr. Kavya Rao");
+  await user.type(card.getByLabelText("Email"), "kavya@example.com");
+  await user.type(card.getByLabelText("Password"), PASSWORD);
+  await user.type(card.getByLabelText("Confirm password"), PASSWORD);
+  await user.selectOptions(card.getByLabelText("Speciality"), "Paediatrics");
+  await user.type(card.getByLabelText("Registration (licence) number"), "PMC-9090");
+  await user.type(card.getByLabelText("Medical council"), "Punjab Medical Council");
+  await user.type(card.getByLabelText("Years of experience"), "7");
+  await user.type(card.getByLabelText("Consultation fee (₹)"), "550");
+  await user.type(card.getByLabelText("Qualifications"), "MBBS, DCH");
+  return card;
 }
 
 describe("doctor sign-up", () => {
-  it("goes through four steps and sends the profile for review", async () => {
+  it("sends the account and professional details for review", async () => {
     let sent: DoctorRegisterInput | undefined;
     server.use(
-      http.post("*/api/v1/auth/register/doctor", async ({ request }) => {
+      http.post(URL, async ({ request }) => {
         sent = (await request.json()) as DoctorRegisterInput;
         return HttpResponse.json({ id: "20", verification_status: "pending" }, { status: 201 });
       }),
     );
     const user = userEvent.setup();
-    renderApp("/register/doctor");
+    renderApp("/register");
 
-    await fillAccount(user);
-    expect(await screen.findByRole("heading", { name: "Professional details" })).toBeInTheDocument();
-    await fillProfessional(user);
-    await fillAbout(user);
+    const card = await fillDoctorForm(user);
+    await user.click(card.getByRole("button", { name: "Submit for review" }));
+    expect(card.getByRole("alert")).toHaveTextContent("Tick the box");
 
-    expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
-    expect(screen.getByText("PMC-9090")).toBeInTheDocument();
-    expect(screen.getByText("₹550")).toBeInTheDocument();
+    await user.click(card.getByRole("checkbox"));
+    await user.click(card.getByRole("button", { name: "Submit for review" }));
 
-    await user.click(screen.getByRole("button", { name: "Submit for review" }));
-    expect(screen.getByRole("alert")).toHaveTextContent("Tick the box");
-
-    await user.click(screen.getByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: "Submit for review" }));
-
-    expect(await screen.findByRole("heading", { name: "Profile sent for review" })).toBeInTheDocument();
+    expect(
+      await card.findByRole("heading", { name: "Profile sent for review" }),
+    ).toBeInTheDocument();
     expect(sent).toEqual({
       name: "Dr. Kavya Rao",
       email: "kavya@example.com",
       phone: null,
       city: null,
-      password: "a-strong-password",
+      password: PASSWORD,
       specialization: "Paediatrics",
       license_number: "PMC-9090",
       council: "Punjab Medical Council",
@@ -74,45 +68,64 @@ describe("doctor sign-up", () => {
     });
   });
 
-  it("does not move on until a step is filled in correctly", async () => {
+  it("checks every field before sending", async () => {
+    let called = false;
+    server.use(
+      http.post(URL, () => {
+        called = true;
+        return HttpResponse.json({});
+      }),
+    );
     const user = userEvent.setup();
-    renderApp("/register/doctor");
+    renderApp("/register");
+    const card = await doctorCard();
 
-    await user.click(await screen.findByRole("button", { name: "Continue" }));
-    expect(screen.getByText("Enter your full name")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Account" })).toBeInTheDocument();
+    await user.type(card.getByLabelText("Password"), "weakpassword");
+    await user.type(card.getByLabelText("Years of experience"), "lots");
+    await user.click(card.getByRole("checkbox"));
+    await user.click(card.getByRole("button", { name: "Submit for review" }));
 
-    await fillAccount(user);
-    await user.type(await screen.findByLabelText("Years of experience"), "lots");
-    await user.click(screen.getByRole("button", { name: "Continue" }));
-    expect(screen.getByText("Choose your speciality")).toBeInTheDocument();
-    expect(screen.getByText("Enter years as a number, like 8")).toBeInTheDocument();
+    expect(card.getByText("Enter your full name")).toBeInTheDocument();
+    expect(card.getByText("Choose a stronger password")).toBeInTheDocument();
+    expect(card.getByText("Choose your speciality")).toBeInTheDocument();
+    expect(card.getByText("Enter years as a number, like 8")).toBeInTheDocument();
+    expect(called).toBe(false);
   });
 
-  it("goes back to the licence step when the licence is already used", async () => {
+  it("shows the server's message on the licence field", async () => {
     server.use(
-      http.post("*/api/v1/auth/register/doctor", () =>
+      http.post(URL, () =>
         HttpResponse.json(
-          { error: { code: "LICENSE_TAKEN", message: "Another doctor has already registered this licence number." } },
+          {
+            error: {
+              code: "LICENSE_TAKEN",
+              message: "Another doctor has already registered this licence number.",
+            },
+          },
           { status: 409 },
         ),
       ),
     );
     const user = userEvent.setup();
-    renderApp("/register/doctor");
-    await fillAccount(user);
-    await fillProfessional(user);
-    await fillAbout(user);
-    await user.click(await screen.findByRole("checkbox"));
-    await user.click(screen.getByRole("button", { name: "Submit for review" }));
+    renderApp("/register");
 
-    expect(await screen.findByRole("heading", { name: "Professional details" })).toBeInTheDocument();
-    expect(screen.getByText("Another doctor has already registered this licence number.")).toBeInTheDocument();
+    const card = await fillDoctorForm(user);
+    await user.click(card.getByRole("checkbox"));
+    await user.click(card.getByRole("button", { name: "Submit for review" }));
+
+    expect(
+      await card.findByText("Another doctor has already registered this licence number."),
+    ).toBeInTheDocument();
+    expect(card.getByLabelText("Registration (licence) number")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
   });
 
-  it("is linked from the patient sign-up page", async () => {
-    renderApp("/register");
-    expect(await screen.findByRole("link", { name: "Join as a doctor" })).toHaveAttribute("href", "/register/doctor");
+  it("sends the old doctor sign-up link to the sign-up page", async () => {
+    const { router } = renderApp("/register/doctor");
+    expect(await screen.findByRole("region", { name: "I'm a doctor" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/register");
   });
 });
 
@@ -121,7 +134,9 @@ describe("doctor approval", () => {
     signInAs("doctor");
     doctors[0].verification_status = "pending";
     renderApp("/doctor");
-    expect(await screen.findByRole("heading", { name: "Your profile is under review" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Your profile is under review" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Doctor portal" })).not.toBeInTheDocument();
   });
 
@@ -133,7 +148,10 @@ describe("doctor approval", () => {
     server.use(
       http.put("*/api/v1/doctors/me", async ({ request }) => {
         updated = true;
-        Object.assign(doctors[0], await request.json(), { verification_status: "pending", rejection_reason: null });
+        Object.assign(doctors[0], await request.json(), {
+          verification_status: "pending",
+          rejection_reason: null,
+        });
         return HttpResponse.json(doctors[0]);
       }),
     );
@@ -145,7 +163,9 @@ describe("doctor approval", () => {
     await user.type(screen.getByLabelText("Registration (licence) number"), "PMC-10000-B");
     await user.click(screen.getByRole("button", { name: "Send for review again" }));
 
-    expect(await screen.findByRole("heading", { name: "Your profile is under review" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Your profile is under review" }),
+    ).toBeInTheDocument();
     expect(updated).toBe(true);
     expect(doctors[0].license_number).toBe("PMC-10000-B");
   });
@@ -179,7 +199,9 @@ describe("doctor without a profile", () => {
     const user = userEvent.setup();
     renderApp("/doctor");
 
-    expect(await screen.findByRole("heading", { name: "Finish your doctor profile" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Finish your doctor profile" }),
+    ).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Speciality"), "ENT");
     await user.type(screen.getByLabelText("Registration (licence) number"), "PMC-4545");
     await user.type(screen.getByLabelText("Medical council"), "Punjab Medical Council");
@@ -188,7 +210,13 @@ describe("doctor without a profile", () => {
     await user.type(screen.getByLabelText("Qualifications"), "MBBS, MS (ENT)");
     await user.click(screen.getByRole("button", { name: "Send for review" }));
 
-    expect(await screen.findByRole("heading", { name: "Your profile is under review" })).toBeInTheDocument();
-    expect(sent).toMatchObject({ specialization: "ENT", license_number: "PMC-4545", consultation_fee: 450 });
+    expect(
+      await screen.findByRole("heading", { name: "Your profile is under review" }),
+    ).toBeInTheDocument();
+    expect(sent).toMatchObject({
+      specialization: "ENT",
+      license_number: "PMC-4545",
+      consultation_fee: 450,
+    });
   });
 });

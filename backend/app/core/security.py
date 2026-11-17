@@ -46,3 +46,16 @@ def read_token(token: str, token_type: str) -> int | None:
 def _create_token(claims: dict, lifetime: timedelta) -> str:
     now = datetime.now(UTC)
     return jwt.encode({**claims, "iat": now, "exp": now + lifetime}, settings.JWT_SECRET, algorithm="HS256")
+
+
+WEAK_PASSWORD = "Choose a stronger password: use at least 3 of lowercase, uppercase, numbers and symbols."
+
+
+def is_strong_password(password: str) -> bool:
+    kinds = [
+        any(c.islower() for c in password),
+        any(c.isupper() for c in password),
+        any(c.isdigit() for c in password),
+        any(not c.isalnum() for c in password),
+    ]
+    return len(password) >= 8 and sum(kinds) >= 3

@@ -12,6 +12,7 @@ from app.api.v1 import (
     patients,
     reports,
 )
+from app.api.v1.admin import appointments as admin_appointments
 from app.api.v1.admin import doctors as admin_doctors
 from app.api.v1.admin import patients as admin_patients
 
@@ -29,5 +30,6 @@ for module in (
     dicom,
     admin_doctors,
     admin_patients,
+    admin_appointments,
 ):
     api_router.include_router(module.router)

@@ -1,4 +1,4 @@
-import type { RouteObject } from "react-router";
+import { Navigate, type RouteObject } from "react-router";
 import { Spinner } from "@/components/ui/Spinner";
 import { AdminLayout } from "@/features/admin/AdminLayout";
 import { EmptyPage } from "@/features/admin/EmptyPage";
@@ -20,7 +20,7 @@ export const routes: RouteObject[] = [
       { path: "/", lazy: page(() => import("@/features/public/HomePage")) },
       { path: "/login", lazy: page(() => import("@/features/auth/LoginPage")) },
       { path: "/register", lazy: page(() => import("@/features/auth/RegisterPage")) },
-      { path: "/register/doctor", lazy: page(() => import("@/features/auth/DoctorRegisterPage")) },
+      { path: "/register/doctor", element: <Navigate to="/register" replace /> },
       { path: "/logout", element: <LogoutPage /> },
       {
         path: "/admin",
@@ -33,7 +33,10 @@ export const routes: RouteObject[] = [
           { index: true, element: <EmptyPage title="Overview" /> },
           { path: "doctors", lazy: page(() => import("@/features/admin/doctors/DoctorsPage")) },
           { path: "patients", lazy: page(() => import("@/features/admin/patients/PatientsPage")) },
-          { path: "appointments", element: <EmptyPage title="Appointments" /> },
+          {
+            path: "appointments",
+            lazy: page(() => import("@/features/admin/appointments/AppointmentsPage")),
+          },
           { path: "kb", element: <EmptyPage title="Knowledge base" /> },
           { path: "audit", element: <EmptyPage title="Audit log" /> },
           { path: "*", element: <NotFound /> },

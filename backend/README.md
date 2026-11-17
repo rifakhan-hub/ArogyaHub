@@ -73,6 +73,9 @@ All routes start with `/api/v1`.
 | `POST /admin/doctors/{id}/verify` | admin | Approve, or reject with a reason |
 | `GET /admin/doctors/{id}/documents` | admin | A doctor's uploaded documents |
 | `GET /admin/doctors/{id}/documents/{doc_id}/file` | admin | Open a document while reviewing |
+| `GET /admin/appointments/summary` | admin | How many appointments there are in each status |
+| `GET /admin/appointments` | admin | Every appointment, filtered by patient or doctor name, status and day |
+| `GET /admin/appointments/{id}` | admin | One appointment with its consultation times and the doctor's notes and medicines |
 | `GET /admin/patients` | admin | Patients, filtered by search and status |
 | `GET /admin/patients/{id}` | admin | One patient, with health details |
 | `PATCH /admin/patients/{id}/block` | admin | Block (with a reason) or unblock |
@@ -80,7 +83,7 @@ All routes start with `/api/v1`.
 
 ## How doctor approval works
 
-1. The doctor signs up in 4 steps on the website. Everything is sent once, to `/auth/register/doctor`.
+1. The doctor fills in the doctor form on the sign-up page (`/register`, next to the patient form): account details, then professional details. Everything is sent once, to `/auth/register/doctor`.
 2. The profile starts as `pending`. The doctor can log in, but sees "under review" instead of the doctor portal.
 3. An admin opens Doctors in the admin console and approves the profile, or rejects it with a reason.
 4. Approved: the doctor portal opens. Rejected: the doctor sees the reason, fixes the details and sends them again (`PUT /doctors/me`), which sets the status back to `pending`.
@@ -303,7 +306,7 @@ Files are saved under `backend/uploads/` (set `UPLOAD_DIR` in `.env` to change i
 
 ## How login works
 
-1. **Register:** the password is hashed with argon2 and saved in `users.password_hash`. The plain password is never stored.
+1. **Register:** the patient and doctor forms are side by side on `/register`. The password needs at least 8 characters and 3 of these 4: a lowercase letter, an uppercase letter, a number, a symbol. The page shows a strength meter (Too short, Weak, Good, Strong) and a checklist while you type, and only Good or Strong can be sent. The backend checks the same rule, so it can't be skipped (`VALIDATION_ERROR`). The password is hashed with argon2 and saved in `users.password_hash`. The plain password is never stored.
 2. **Log in:** the backend checks the password and sends back two tokens:
    - an **access token** (lasts 15 minutes). The frontend keeps it in memory and sends it as `Authorization: Bearer <token>`.
    - a **refresh token** (lasts 7 days) in an HttpOnly cookie, which page scripts can't read.
@@ -361,6 +364,7 @@ backend/
         dicom.py             scan study, series and image download
         admin/
           doctors.py         list, detail, approve or reject
+          appointments.py    summary, list, and one appointment with its consultation
           patients.py        list, detail, block or unblock
     services/
       slots.py               turns weekly hours into free slots (IST)
@@ -426,7 +430,7 @@ Restart the server after you change `.env`.
 
 ## Postman
 
-`postman/` at the repo root has a small collection with one request for each basic create, read, update and delete action (36 requests):
+`postman/` at the repo root has a small collection with one request for each basic create, read, update and delete action (37 requests):
 
 | Folder | Requests |
 |---|---|
@@ -434,7 +438,7 @@ Restart the server after you change `.env`.
 | 2. Admin | list and get doctors, approve the doctor, list and get patients, block, unblock |
 | 3. Profiles | get and update the patient and doctor profiles |
 | 4. Doctor availability | add and list weekly hours |
-| 5. Appointments | list doctors, free slots, book, list, get, cancel |
+| 5. Appointments | list doctors, get a doctor with the next free slot, free slots, book, list, get, cancel |
 | 6. Reports | upload, list, share, list shared, stop sharing, delete |
 | 7. Doctor documents | upload, list, admin lists |
 | 8. Clean up | delete the hours, log out |
@@ -445,3 +449,9 @@ Each request checks the status code and saves the IDs the next requests need. Th
 2. Choose the **AarogyaHub local** environment, and set `adminEmail` and `adminPassword` to the admin you created.
 3. Set Postman's working directory to the repo root (Settings → General → Working directory), so the uploads find `postman/files/`.
 4. With the server running, open the collection → **Run**, folders in order.
+
+Or run it from the command line with the Postman CLI, from the repo root:
+
+```bash
+postman collection run postman/AarogyaHub.postman_collection.json -e postman/AarogyaHub-local.postman_environment.json --env-var adminPassword=YOUR_ADMIN_PASSWORD --working-dir .
+```

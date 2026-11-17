@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { renderApp, signInAs } from "./render";
@@ -67,7 +67,10 @@ describe("doctors", () => {
     expect(within(panel).getByText(/at least 10 characters/)).toBeInTheDocument();
     expect(doctors.find((d) => d.id === "11")?.verification_status).toBe("pending");
 
-    await user.type(within(panel).getByLabelText("Reason for rejecting"), "Licence photo is blurry");
+    await user.type(
+      within(panel).getByLabelText("Reason for rejecting"),
+      "Licence photo is blurry",
+    );
     await user.click(within(panel).getByRole("button", { name: "Confirm rejection" }));
     expect(await screen.findByText("Rejected Dr. Ravi Kapoor")).toBeInTheDocument();
     expect(doctors.find((d) => d.id === "11")?.rejection_reason).toBe("Licence photo is blurry");
@@ -111,5 +114,49 @@ describe("pages that are not built yet", () => {
     renderApp("/admin/audit");
     expect(await screen.findByRole("heading", { name: "Audit log" })).toBeInTheDocument();
     expect(screen.getByText("Nothing here yet")).toBeInTheDocument();
+  });
+});
+
+describe("appointments", () => {
+  it("lists every appointment with a summary", async () => {
+    signInAs("admin");
+    renderApp("/admin/appointments");
+
+    expect(await screen.findByRole("heading", { name: "Appointments" })).toBeInTheDocument();
+    const table = await screen.findByRole("table", { name: "Appointments" });
+    expect(await within(table).findAllByText("Dr. Anjali Mehta")).toHaveLength(3);
+    expect(within(table).getByText("Rahul Verma")).toBeInTheDocument();
+    expect(screen.getByText("All appointments").nextElementSibling).toHaveTextContent("3");
+    expect(screen.getByText("Completed consultations").nextElementSibling).toHaveTextContent("1");
+  });
+
+  it("filters by search and status", async () => {
+    signInAs("admin");
+    const user = userEvent.setup();
+    renderApp("/admin/appointments");
+    const table = await screen.findByRole("table", { name: "Appointments" });
+    await within(table).findByText("Rahul Verma");
+
+    await user.type(screen.getByPlaceholderText("Search patient or doctor"), "rahul");
+    await waitFor(() => expect(within(table).queryByText("Priya Sharma")).not.toBeInTheDocument());
+    expect(within(table).getByText("Rahul Verma")).toBeInTheDocument();
+
+    await user.clear(screen.getByPlaceholderText("Search patient or doctor"));
+    await user.selectOptions(screen.getByLabelText("Status"), "completed");
+    await waitFor(() => expect(within(table).queryByText("Rahul Verma")).not.toBeInTheDocument());
+    expect(await within(table).findAllByText("Priya Sharma")).toHaveLength(1);
+  });
+
+  it("shows the consultation and the doctor's notes", async () => {
+    signInAs("admin");
+    const user = userEvent.setup();
+    renderApp("/admin/appointments?status=completed");
+    const table = await screen.findByRole("table", { name: "Appointments" });
+
+    await user.click((await within(table).findAllByText("Completed"))[0]);
+    const panel = await screen.findByRole("dialog", { name: "Appointment with Dr. Anjali Mehta" });
+    expect(await within(panel).findByText("Contact dermatitis")).toBeInTheDocument();
+    expect(within(panel).getByRole("row", { name: /Cetirizine/ })).toBeInTheDocument();
+    expect(within(panel).getByText("30 min")).toBeInTheDocument();
   });
 });
